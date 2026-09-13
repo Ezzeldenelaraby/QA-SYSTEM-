@@ -7,6 +7,10 @@ echo "=== [QMS HUB CONTAINER INITIALIZATION] ==="
 echo "-> Applying database migrations..."
 python manage.py migrate --noinput
 
+# Ensure default administrator exists
+echo "-> Checking production superuser..."
+python manage.py ensure_superuser
+
 # Collect static files for WhiteNoise
 echo "-> Collecting static assets..."
 python manage.py collectstatic --noinput
