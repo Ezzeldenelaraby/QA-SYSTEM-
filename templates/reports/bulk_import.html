@@ -1,0 +1,287 @@
+{% extends 'base.html' %}
+{% block title %}Master Data Bulk Import Wizard{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1 small">
+                <li class="breadcrumb-item"><a href="{% url 'reports:index' %}" class="text-decoration-none">Reports & Exports</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Bulk Import Wizard</li>
+            </ol>
+        </nav>
+        <h1 class="h3 fw-bold text-dark mb-1">Master Data Bulk Import Wizard</h1>
+        <p class="text-muted small mb-0">Onboard hundreds of measuring instruments, employees, factory departments, or quality objectives using standardized Excel / CSV sheets.</p>
+    </div>
+    <div>
+        <a href="{% url 'reports:index' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Back to Reports
+        </a>
+    </div>
+</div>
+
+<!-- Step 1: Download Standardized Templates -->
+<div class="card shadow-sm mb-4 border-0">
+    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+        <span class="fw-bold text-primary"><i class="bi bi-cloud-arrow-down-fill me-2"></i> Step 1: Download Standardized Excel Templates</span>
+        <span class="badge bg-light text-secondary border">Pre-formatted Headers</span>
+    </div>
+    <div class="card-body p-4">
+        <p class="text-muted small mb-3">
+            Download the official import template matching your data domain. Each file includes correct column headers, sample data rows, and required format hints.
+        </p>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="p-3 border rounded-3 bg-light text-center h-100 d-flex flex-column justify-content-between">
+                    <div>
+                        <i class="bi bi-tools fs-2 text-primary mb-2 d-block"></i>
+                        <h6 class="fw-bold text-dark mb-1">Measuring Gauges</h6>
+                        <small class="text-muted d-block mb-3">Calipers, micrometers, torque wrenches, CMM</small>
+                    </div>
+                    <a href="{% url 'reports:download_template' model_type='equipment' %}" class="btn btn-sm btn-outline-primary w-100">
+                        <i class="bi bi-file-earmark-spreadsheet me-1"></i> Download Template
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 border rounded-3 bg-light text-center h-100 d-flex flex-column justify-content-between">
+                    <div>
+                        <i class="bi bi-people-fill fs-2 text-success mb-2 d-block"></i>
+                        <h6 class="fw-bold text-dark mb-1">Users & Inspectors</h6>
+                        <small class="text-muted d-block mb-3">Plant operators, QA engineers, inspectors</small>
+                    </div>
+                    <a href="{% url 'reports:download_template' model_type='users' %}" class="btn btn-sm btn-outline-success w-100">
+                        <i class="bi bi-file-earmark-spreadsheet me-1"></i> Download Template
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 border rounded-3 bg-light text-center h-100 d-flex flex-column justify-content-between">
+                    <div>
+                        <i class="bi bi-building fs-2 text-warning mb-2 d-block"></i>
+                        <h6 class="fw-bold text-dark mb-1">Departments</h6>
+                        <small class="text-muted d-block mb-3">Shop floor divisions, warehouses, labs</small>
+                    </div>
+                    <a href="{% url 'reports:download_template' model_type='departments' %}" class="btn btn-sm btn-outline-warning w-100">
+                        <i class="bi bi-file-earmark-spreadsheet me-1"></i> Download Template
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-3 border rounded-3 bg-light text-center h-100 d-flex flex-column justify-content-between">
+                    <div>
+                        <i class="bi bi-bullseye fs-2 text-danger mb-2 d-block"></i>
+                        <h6 class="fw-bold text-dark mb-1">Quality Objectives</h6>
+                        <small class="text-muted d-block mb-3">ISO 9001 Clause 6.2 KPIs & annual goals</small>
+                    </div>
+                    <a href="{% url 'reports:download_template' model_type='objectives' %}" class="btn btn-sm btn-outline-danger w-100">
+                        <i class="bi bi-file-earmark-spreadsheet me-1"></i> Download Template
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Step 2: Upload and Dry-Run Validate -->
+<div class="card shadow-sm mb-4 border-0">
+    <div class="card-header bg-white py-3 border-bottom">
+        <span class="fw-bold text-dark"><i class="bi bi-cloud-arrow-up-fill me-2 text-primary"></i> Step 2: Upload File for Dry-Run Pre-Flight Validation</span>
+    </div>
+    <div class="card-body p-4">
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="commit" value="0">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold small text-dark">Data Domain / Target Entity</label>
+                    <select name="model_type" class="form-select" required>
+                        <option value="equipment" {% if model_type == 'equipment' %}selected{% endif %}>Calibration Equipment & Measuring Gauges</option>
+                        <option value="users" {% if model_type == 'users' %}selected{% endif %}>Employees, Technicians & Quality Inspectors</option>
+                        <option value="departments" {% if model_type == 'departments' %}selected{% endif %}>Plant Departments & Production Lines</option>
+                        <option value="objectives" {% if model_type == 'objectives' %}selected{% endif %}>Quality Objectives & Performance Targets</option>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label fw-semibold small text-dark">Select Spreadsheet (.xlsx or .csv)</label>
+                    <input type="file" name="import_file" class="form-control" accept=".xlsx,.csv" required>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100 fw-semibold">
+                        <i class="bi bi-shield-check me-1"></i> Validate & Dry-Run
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Step 3: Dry-Run Validation Results Preview -->
+{% if preview %}
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-dark text-white py-3 d-flex justify-content-between align-items-center">
+        <div>
+            <span class="fw-bold"><i class="bi bi-clipboard2-pulse-fill me-2 text-warning"></i> Pre-Flight Validation Report: {{ preview.filename }}</span>
+        </div>
+        <div>
+            <span class="badge bg-secondary">{{ preview.model_type|upper }}</span>
+        </div>
+    </div>
+    <div class="card-body p-4">
+        <!-- Summary KPI Row -->
+        <div class="row g-3 mb-4 text-center">
+            <div class="col-md-4">
+                <div class="p-3 bg-light rounded border">
+                    <small class="text-muted d-block fw-semibold">Total Rows Parsed</small>
+                    <span class="fs-4 fw-bold text-dark">{{ preview.total_rows }}</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 bg-success-subtle rounded border border-success">
+                    <small class="text-success d-block fw-semibold">Valid & Ready to Commit</small>
+                    <span class="fs-4 fw-bold text-success">{{ preview.valid_count }}</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 {% if preview.invalid_count > 0 %}bg-danger-subtle border border-danger text-danger{% else %}bg-light border text-muted{% endif %} rounded">
+                    <small class="d-block fw-semibold">Rows with Validation Errors</small>
+                    <span class="fs-4 fw-bold">{{ preview.invalid_count }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Errors List (if any) -->
+        {% if preview.errors %}
+        <div class="alert alert-danger mb-4">
+            <h6 class="fw-bold text-danger mb-2"><i class="bi bi-exclamation-octagon-fill me-2"></i> Errors detected in {{ preview.invalid_count }} row(s):</h6>
+            <div class="table-responsive" style="max-height: 240px; overflow-y: auto;">
+                <table class="table table-sm table-bordered bg-white mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 80px;">Row #</th>
+                            <th style="width: 180px;">Record Identifier</th>
+                            <th>Validation Errors</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for err in preview.errors %}
+                        <tr>
+                            <td class="font-monospace text-center fw-bold">{{ err.row }}</td>
+                            <td class="font-monospace text-dark">{{ err.identifier }}</td>
+                            <td class="text-danger">
+                                <ul class="mb-0 ps-3">
+                                    {% for msg in err.errors %}
+                                    <li>{{ msg }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Valid Records Preview Table -->
+        {% if preview.valid_count > 0 %}
+        <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
+            <i class="bi bi-check-circle-fill text-success me-1"></i> Preview of Valid Records (First {{ preview.valid_samples|length }} of {{ preview.valid_count }}):
+        </h6>
+        <div class="table-responsive mb-4">
+            <table class="table table-sm table-striped table-hover small border mb-0">
+                <thead class="table-light">
+                    <tr>
+                        {% if preview.model_type == 'equipment' %}
+                        <th>Equipment ID</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Manufacturer / Model</th>
+                        <th>Serial Number</th>
+                        <th>Dept</th>
+                        <th>Location</th>
+                        <th>Freq (M)</th>
+                        <th>Last Cal Date</th>
+                        {% elif preview.model_type == 'users' %}
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Full Name</th>
+                        <th>Employee ID</th>
+                        <th>Role</th>
+                        <th>Dept</th>
+                        <th>Job Title</th>
+                        {% elif preview.model_type == 'departments' %}
+                        <th>Code</th>
+                        <th>Department Name</th>
+                        <th>Description</th>
+                        {% elif preview.model_type == 'objectives' %}
+                        <th>Code</th>
+                        <th>Objective Name</th>
+                        <th>KPI</th>
+                        <th>Target</th>
+                        <th>Baseline</th>
+                        <th>Dept</th>
+                        <th>Due Date</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in preview.valid_samples %}
+                    <tr>
+                        {% if preview.model_type == 'equipment' %}
+                        <td class="font-monospace fw-bold text-primary">{{ row.equipment_id }}</td>
+                        <td>{{ row.equipment_name }}</td>
+                        <td><span class="badge bg-secondary">{{ row.category }}</span></td>
+                        <td>{{ row.manufacturer }} {{ row.model }}</td>
+                        <td class="font-monospace">{{ row.serial_number|default:'-' }}</td>
+                        <td><span class="badge bg-light text-dark border">{{ row.department_code }}</span></td>
+                        <td>{{ row.location }}</td>
+                        <td>{{ row.frequency }}</td>
+                        <td>{{ row.last_calibration_date }}</td>
+                        {% elif preview.model_type == 'users' %}
+                        <td class="font-monospace fw-bold text-primary">{{ row.username }}</td>
+                        <td>{{ row.email }}</td>
+                        <td>{{ row.first_name }} {{ row.last_name }}</td>
+                        <td class="font-monospace">{{ row.employee_id|default:'-' }}</td>
+                        <td><span class="badge bg-info text-dark">{{ row.role }}</span></td>
+                        <td><span class="badge bg-light text-dark border">{{ row.department_code }}</span></td>
+                        <td>{{ row.title }}</td>
+                        {% elif preview.model_type == 'departments' %}
+                        <td class="font-monospace fw-bold text-primary">{{ row.code }}</td>
+                        <td class="fw-semibold">{{ row.name }}</td>
+                        <td class="text-muted">{{ row.description }}</td>
+                        {% elif preview.model_type == 'objectives' %}
+                        <td class="font-monospace fw-bold text-primary">{{ row.code }}</td>
+                        <td class="fw-semibold">{{ row.name }}</td>
+                        <td>{{ row.kpi }}</td>
+                        <td class="fw-bold text-success">{{ row.target }} {{ row.unit }}</td>
+                        <td class="text-muted">{{ row.baseline }} {{ row.unit }}</td>
+                        <td><span class="badge bg-light text-dark border">{{ row.department_code }}</span></td>
+                        <td>{{ row.due_date }}</td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Stage 2 Execution Form -->
+        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded border">
+            <div>
+                <span class="fw-bold text-dark">Ready to Commit:</span>
+                <span class="text-muted small ms-1">An atomic transaction will write {{ preview.valid_count }} records and register an ISO Audit Trail entry.</span>
+            </div>
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="model_type" value="{{ preview.model_type }}">
+                <input type="hidden" name="commit" value="1">
+                <button type="submit" class="btn btn-success px-4 py-2 fw-semibold shadow-sm">
+                    <i class="bi bi-check2-circle me-1"></i> Confirm & Commit {{ preview.valid_count }} Records
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

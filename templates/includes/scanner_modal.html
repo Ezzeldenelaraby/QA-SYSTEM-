@@ -1,0 +1,306 @@
+<!-- Shop Floor Barcode & QR Quick Scanner Modal -->
+<div class="modal fade" id="barcodeScannerModal" tabindex="-1" aria-labelledby="barcodeScannerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content shadow-lg border-0">
+            <div class="modal-header bg-dark text-white py-3">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-qr-code-scan fs-4 text-warning"></i>
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0" id="barcodeScannerModalLabel">Shop-Floor Barcode & QR Scanner</h5>
+                        <small class="text-secondary" style="font-size: 0.75rem;">Supports USB/Bluetooth Barcode Guns, Mobile Cameras & Manual Lookups</small>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-secondary font-monospace" style="font-size: 0.72rem;">Hotkey: F2</span>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            </div>
+
+            <div class="modal-body p-4">
+                <!-- Barcode Input Box -->
+                <div class="mb-3">
+                    <label for="quickScanInput" class="form-label fw-semibold text-dark d-flex justify-content-between">
+                        <span><i class="bi bi-upc-scan me-1 text-primary"></i> Scan Code or Type Asset / Document ID:</span>
+                        <span class="text-muted small">Auto-reads physical barcode scanner wedge</span>
+                    </label>
+                    <div class="input-group input-group-lg shadow-sm">
+                        <span class="input-group-text bg-light text-primary"><i class="bi bi-search"></i></span>
+                        <input type="text" id="quickScanInput" class="form-control font-monospace" placeholder="e.g. NCR-2024-0001, EQ-2024-001, MIT-09281, or scan QR..." autocomplete="off">
+                        <button class="btn btn-primary px-4 fw-semibold" type="button" id="btnQuickScanLookup">
+                            <span id="scanBtnSpinner" class="spinner-border spinner-border-sm d-none me-1" role="status"></span>
+                            Lookup
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Control Switches -->
+                <div class="d-flex flex-wrap justify-content-between align-items-center bg-light p-2 rounded-3 border mb-3 small">
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" id="autoRedirectCheck" checked>
+                        <label class="form-check-label text-secondary fw-semibold" for="autoRedirectCheck">
+                            Auto-open record immediately on match (Factory Gun Mode)
+                        </label>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-outline-dark d-inline-flex align-items-center gap-1" id="btnToggleCamera">
+                            <i class="bi bi-camera-video"></i> <span id="cameraBtnText">Open Camera Scanner</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Camera Stream Container -->
+                <div id="cameraScannerWrapper" class="text-center p-3 bg-dark rounded-3 mb-3" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center text-white mb-2 px-1">
+                        <small><i class="bi bi-camera me-1"></i> Position QR code or Barcode inside the frame</small>
+                        <button type="button" class="btn btn-sm btn-outline-light py-0 px-2" id="btnCloseCamera">Close Camera</button>
+                    </div>
+                    <div id="qr-reader" style="width: 100%; max-width: 480px; margin: 0 auto;"></div>
+                </div>
+
+                <!-- Scan Results Preview Card -->
+                <div id="quickScanResult" class="p-3 border rounded-3 bg-white shadow-sm" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-start border-bottom pb-2 mb-2">
+                        <div>
+                            <span id="resBadgeType" class="badge bg-primary mb-1">Equipment</span>
+                            <h5 id="resTitle" class="fw-bold text-dark mb-0">Digital Caliper 150mm</h5>
+                            <small id="resIdentifier" class="text-muted font-monospace">EQ-2024-001 | S/N: MIT-09281</small>
+                        </div>
+                        <div class="text-end">
+                            <span id="resStatusBadge" class="badge bg-success fs-6">Valid</span>
+                            <div id="resDept" class="text-muted small mt-1">Machining Dept</div>
+                        </div>
+                    </div>
+                    <div id="resActionButtons" class="d-flex flex-wrap gap-2 pt-2">
+                        <!-- Action buttons injected via JS -->
+                    </div>
+                </div>
+
+                <!-- Error Message Container -->
+                <div id="quickScanError" class="alert alert-warning d-flex align-items-center gap-2 mb-0" style="display: none;">
+                    <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                    <span id="quickScanErrorMsg">No matching QMS asset found.</span>
+                </div>
+            </div>
+
+            <div class="modal-footer bg-light py-2 px-4 justify-content-between">
+                <small class="text-muted">
+                    Supports: <strong>NCR Red Tags, Calibration Stickers, CAPA, Actions, Inspections, SOPs</strong>
+                </small>
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Load html5-qrcode on demand for camera scanning -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+<script>
+(function() {
+    let html5QrCode = null;
+    let cameraActive = false;
+
+    // Sound Synthesizer for Industrial Audio Feedback
+    function playScanAudio(success) {
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            const ctx = new AudioCtx();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sine';
+            if (success) {
+                osc.frequency.setValueAtTime(880, ctx.currentTime);
+                gain.gain.setValueAtTime(0.12, ctx.currentTime);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.12);
+            } else {
+                osc.frequency.setValueAtTime(290, ctx.currentTime);
+                gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.25);
+            }
+        } catch(e) {}
+    }
+
+    // Modal autofocus
+    const scanModalEl = document.getElementById('barcodeScannerModal');
+    if (scanModalEl) {
+        scanModalEl.addEventListener('shown.bs.modal', function() {
+            const input = document.getElementById('quickScanInput');
+            if (input) {
+                input.focus();
+                input.select();
+            }
+        });
+
+        scanModalEl.addEventListener('hidden.bs.modal', function() {
+            stopCamera();
+        });
+    }
+
+    // Global Hotkey: F2 opens Scanner Modal
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'F2') {
+            e.preventDefault();
+            const modalInstance = bootstrap.Modal.getOrCreateInstance(scanModalEl);
+            modalInstance.show();
+        }
+    });
+
+    // Handle Lookup Execution
+    async function executeLookup(code) {
+        code = (code || '').trim();
+        if (!code) return;
+
+        const spinner = document.getElementById('scanBtnSpinner');
+        const errContainer = document.getElementById('quickScanError');
+        const resContainer = document.getElementById('quickScanResult');
+        const autoRedirect = document.getElementById('autoRedirectCheck').checked;
+
+        if (spinner) spinner.classList.remove('d-none');
+        if (errContainer) errContainer.style.display = 'none';
+        if (resContainer) resContainer.style.display = 'none';
+
+        try {
+            const response = await fetch(`/scan-lookup/?code=${encodeURIComponent(code)}`);
+            const data = await response.json();
+
+            if (spinner) spinner.classList.add('d-none');
+
+            if (data.found && data.item) {
+                playScanAudio(true);
+                const item = data.item;
+
+                if (autoRedirect && item.url) {
+                    window.location.href = item.url;
+                    return;
+                }
+
+                // Populate Result View
+                document.getElementById('resBadgeType').innerText = item.type;
+                document.getElementById('resTitle').innerText = item.title;
+                document.getElementById('resIdentifier').innerText = item.identifier;
+                document.getElementById('resDept').innerText = item.department || '';
+
+                const statusBadge = document.getElementById('resStatusBadge');
+                statusBadge.innerText = item.status;
+                statusBadge.className = `badge ${item.status_badge || 'bg-primary'} fs-6`;
+
+                // Actions buttons
+                const btnContainer = document.getElementById('resActionButtons');
+                btnContainer.innerHTML = '';
+                if (item.actions && item.actions.length > 0) {
+                    item.actions.forEach(act => {
+                        const a = document.createElement('a');
+                        a.href = act.url;
+                        a.className = 'btn btn-sm btn-primary d-inline-flex align-items-center gap-1';
+                        if (act.target) a.target = act.target;
+                        a.innerHTML = `<i class="bi ${act.icon || 'bi-arrow-right-circle'}"></i> ${act.label}`;
+                        btnContainer.appendChild(a);
+                    });
+                }
+
+                resContainer.style.display = 'block';
+            } else {
+                playScanAudio(false);
+                document.getElementById('quickScanErrorMsg').innerText = data.message || `No QMS record matches "${code}"`;
+                errContainer.style.display = 'flex';
+            }
+        } catch (err) {
+            if (spinner) spinner.classList.add('d-none');
+            playScanAudio(false);
+            document.getElementById('quickScanErrorMsg').innerText = "Lookup failed. Please check network connection.";
+            errContainer.style.display = 'flex';
+        }
+    }
+
+    // Input Keydown: Enter triggers scan
+    const scanInput = document.getElementById('quickScanInput');
+    if (scanInput) {
+        scanInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                executeLookup(this.value);
+            }
+        });
+    }
+
+    // Lookup Button Click
+    const lookupBtn = document.getElementById('btnQuickScanLookup');
+    if (lookupBtn) {
+        lookupBtn.addEventListener('click', function() {
+            const input = document.getElementById('quickScanInput');
+            if (input) executeLookup(input.value);
+        });
+    }
+
+    // Camera Scanner Lifecycle
+    function stopCamera() {
+        if (html5QrCode && cameraActive) {
+            html5QrCode.stop().then(() => {
+                cameraActive = false;
+                document.getElementById('cameraScannerWrapper').style.display = 'none';
+                document.getElementById('cameraBtnText').innerText = 'Open Camera Scanner';
+            }).catch(() => {});
+        }
+    }
+
+    const toggleCameraBtn = document.getElementById('btnToggleCamera');
+    const closeCameraBtn = document.getElementById('btnCloseCamera');
+
+    if (toggleCameraBtn) {
+        toggleCameraBtn.addEventListener('click', function() {
+            if (cameraActive) {
+                stopCamera();
+            } else {
+                startCamera();
+            }
+        });
+    }
+
+    if (closeCameraBtn) {
+        closeCameraBtn.addEventListener('click', stopCamera);
+    }
+
+    function startCamera() {
+        if (typeof Html5Qrcode === 'undefined') {
+            alert('QR Camera Scanner library is still loading. Please try again.');
+            return;
+        }
+
+        const wrapper = document.getElementById('cameraScannerWrapper');
+        wrapper.style.display = 'block';
+        document.getElementById('cameraBtnText').innerText = 'Stop Camera';
+
+        if (!html5QrCode) {
+            html5QrCode = new Html5Qrcode("qr-reader");
+        }
+
+        html5QrCode.start(
+            { facingMode: "environment" },
+            {
+                fps: 10,
+                qrbox: { width: 250, height: 250 }
+            },
+            (decodedText, decodedResult) => {
+                // Success QR decode
+                document.getElementById('quickScanInput').value = decodedText;
+                stopCamera();
+                executeLookup(decodedText);
+            },
+            (errorMessage) => {
+                // scan failure frame (normal while seeking)
+            }
+        ).then(() => {
+            cameraActive = true;
+        }).catch(err => {
+            alert("Camera access was blocked or not available: " + err);
+            wrapper.style.display = 'none';
+            document.getElementById('cameraBtnText').innerText = 'Open Camera Scanner';
+        });
+    }
+})();
+</script>

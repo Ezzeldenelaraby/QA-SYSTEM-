@@ -8,6 +8,12 @@
         <h2 class="h3 fw-bold text-navy mb-1">Reports & Data Exports</h2>
         <p class="text-muted small mb-0">Export ISO 9001 / IATF 16949 compliant datasets in Excel (.xlsx) and CSV format</p>
     </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'reports:bulk_import' %}" class="btn btn-primary btn-sm shadow-sm d-flex align-items-center gap-1">
+            <i class="bi bi-cloud-arrow-up-fill"></i>
+            <span>Bulk Import Wizard</span>
+        </a>
+    </div>
 </div>
 
 <!-- Filter Bar -->

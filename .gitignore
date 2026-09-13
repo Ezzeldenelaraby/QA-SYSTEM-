@@ -32,6 +32,8 @@ db.sqlite3-journal
 !/media/.gitkeep
 /staticfiles/*
 !/staticfiles/.gitkeep
+/backups/*
+!/backups/.gitkeep
 
 # Environment & Secrets
 .env

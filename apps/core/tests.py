@@ -411,3 +411,45 @@ class EnterpriseEnhancementsTest(TestCase):
         self.assertEqual(sent.to, ['qa@factory.local'])
         self.assertIn("Industrial QMS Hub", sent.body)
 
+    def test_scan_lookup_equipment(self):
+        url = reverse('core:scan_lookup') + f'?code={self.equipment.equipment_id}'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['found'])
+        self.assertEqual(data['item']['type'], 'Equipment')
+        self.assertIn(self.equipment.equipment_name, data['item']['title'])
+
+    def test_scan_lookup_ncr(self):
+        url = reverse('core:scan_lookup') + f'?code={self.ncr.ncr_number}'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data['found'])
+        self.assertEqual(data['item']['type'], 'NCR')
+
+    def test_scan_lookup_redirect_mode(self):
+        url = reverse('core:scan_lookup') + f'?code={self.ncr.ncr_number}&redirect=1'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, f"/ncr/{self.ncr.id}/")
+
+    def test_scan_lookup_unknown_code(self):
+        url = reverse('core:scan_lookup') + '?code=DOES_NOT_EXIST_XYZ'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertFalse(data['found'])
+
+    def test_backup_database_command(self):
+        from io import StringIO
+        out = StringIO()
+        call_command('backup_database', stdout=out)
+        output = out.getvalue()
+        self.assertIn("Successfully created backup archive", output)
+
+    def test_trigger_backup_view(self):
+        response = self.client.post(reverse('core:trigger_backup'))
+        self.assertEqual(response.status_code, 302)
+
+

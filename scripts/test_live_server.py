@@ -58,6 +58,11 @@ urls_to_test = [
     ("/reports/export/?module=ncr&format=csv", "NCR CSV Download"),
     ("/core/settings/", "System Settings"),
     ("/core/audit-trail/", "Compliance Audit Trail"),
+    ("/scan-lookup/?code=EQ-CAL-001", "Barcode / QR Quick Scan Lookup"),
+    ("/reports/import/", "Master Data Bulk Import Wizard"),
+    ("/reports/import/template/equipment/", "Equipment Master Template (.xlsx)"),
+    ("/reports/import/template/users/", "Employees Import Template (.xlsx)"),
+    ("/reports/import/template/objectives/", "Objectives Import Template (.xlsx)"),
     ("/api/v1/docs/", "API Developer Documentation"),
     ("/health/", "Liveness & Health Probe"),
 ]
