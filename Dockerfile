@@ -35,7 +35,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Create non-root industrial application user
+# Create non-root application user
 RUN useradd -m -u 1000 qms && \
     mkdir -p /app /app/staticfiles /app/media && \
     chown -R qms:qms /app
@@ -48,15 +48,17 @@ COPY --from=builder --chown=qms:qms /root/.local /home/qms/.local
 # Copy application source code
 COPY --chown=qms:qms . .
 
-# Set execution permissions on entrypoint
-RUN chmod +x entrypoint.sh
+# Fix Windows CRLF line endings, set permissions, and allow local sqlite writes
+RUN sed -i 's/\r$//' /app/entrypoint.sh && \
+    chmod +x /app/entrypoint.sh && \
+    chown -R qms:qms /app && \
+    chmod -R 777 /app
 
 USER qms
 
-EXPOSE 8000
+# Collect static assets during build
+RUN python manage.py collectstatic --noinput
 
-# Liveness probe (uses PORT environment variable or falls back to 8000)
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://127.0.0.1:${PORT:-8000}/health/ || exit 1
+EXPOSE 8000
 
 ENTRYPOINT ["/app/entrypoint.sh"]

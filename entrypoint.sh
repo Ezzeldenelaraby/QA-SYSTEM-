@@ -3,24 +3,16 @@ set -e
 
 echo "=== [QMS HUB CONTAINER INITIALIZATION] ==="
 
-# Run database migrations
 echo "-> Applying database migrations..."
 python manage.py migrate --noinput
 
-# Ensure default administrator exists
-echo "-> Checking production superuser..."
+echo "-> Ensuring production superuser..."
 python manage.py ensure_superuser
 
-# Collect static files for WhiteNoise
-echo "-> Collecting static assets..."
-python manage.py collectstatic --noinput
-
-# Start Gunicorn WSGI server
-echo "-> Starting high-performance Gunicorn WSGI application server..."
+echo "-> Starting Gunicorn WSGI application server..."
 exec gunicorn config.wsgi:application \
     --bind 0.0.0.0:${PORT:-8000} \
-    --workers ${GUNICORN_WORKERS:-3} \
-    --threads ${GUNICORN_THREADS:-2} \
+    --workers 2 \
     --timeout 120 \
     --access-logfile - \
     --error-logfile -
