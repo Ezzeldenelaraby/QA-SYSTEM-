@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold text-dark mb-1">{{ title }}</h1>
+        <p class="text-muted small mb-0">ISO 9001:2015 Clause 7.1.5 Measurement Traceability Register.</p>
+    </div>
+    <a href="{% url 'calibration:list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to Equipment
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-4">
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% if form.errors %}
+            <div class="alert alert-danger small py-2">Please correct the indicated fields.</div>
+            {% endif %}
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Equipment ID / Gage Number *</label>
+                    {{ form.equipment_id }}
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label small fw-semibold">Equipment / Instrument Name *</label>
+                    {{ form.equipment_name }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Category *</label>
+                    {{ form.category }}
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Manufacturer</label>
+                    {{ form.manufacturer }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Model Number</label>
+                    {{ form.model }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Serial Number</label>
+                    {{ form.serial_number }}
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Assigned Department *</label>
+                    {{ form.department }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Physical Location *</label>
+                    {{ form.location }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Current Status</label>
+                    {{ form.status }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Measurement Range</label>
+                    {{ form.measurement_range }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Accuracy / Tolerance</label>
+                    {{ form.accuracy }}
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Calibration Frequency (Months) *</label>
+                    {{ form.calibration_frequency_months }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Last Calibration Date *</label>
+                    {{ form.last_calibration_date }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Calibration Service Provider</label>
+                    {{ form.calibration_provider }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Upload Calibration Certificate (PDF / Image)</label>
+                    {{ form.certificate_file }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Metrology Notes</label>
+                    {{ form.notes }}
+                </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                <a href="{% url 'calibration:list' %}" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary px-4 shadow-sm">Save Instrument Record</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold text-dark mb-1">{{ title }}</h1>
+        <p class="text-muted small mb-0">ISO 9001:2015 Clause 8.7 Nonconforming Material / Output Logging.</p>
+    </div>
+    <a href="{% url 'ncr:list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to NCR List
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-4">
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% if form.errors %}
+            <div class="alert alert-danger small py-2">Please correct the indicated fields.</div>
+            {% endif %}
+
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Report Date *</label>
+                    {{ form.date }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Department *</label>
+                    {{ form.department }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Process</label>
+                    {{ form.process }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Source *</label>
+                    {{ form.source }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Part / Product / Material Description *</label>
+                    {{ form.product }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Batch / Lot / Heat Number *</label>
+                    {{ form.batch_lot }}
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label small fw-semibold">Nonconformity Observation & Description *</label>
+                    {{ form.description }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Violated Specification / Drawing Requirement *</label>
+                    {{ form.requirement }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Evidence Details & Observations</label>
+                    {{ form.evidence }}
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Classification *</label>
+                    {{ form.classification }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Severity Rating *</label>
+                    {{ form.severity }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Reported By *</label>
+                    {{ form.reported_by }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Immediate Correction (Immediate fix on parts)</label>
+                    {{ form.immediate_correction }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Containment Action (Prevent escapes)</label>
+                    {{ form.containment_action }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Responsible Engineer *</label>
+                    {{ form.responsible_person }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Target Due Date *</label>
+                    {{ form.due_date }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Current Status</label>
+                    {{ form.status }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Upload Photo or CMM Report Evidence</label>
+                    {{ form.evidence_file }}
+                </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                <a href="{% url 'ncr:list' %}" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-danger px-4 shadow-sm">Save Nonconformity Report</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

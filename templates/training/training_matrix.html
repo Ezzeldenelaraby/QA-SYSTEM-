@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+
+{% block title %}Training Competency Matrix - QMS Hub{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h3 fw-bold text-navy mb-1">Competency & Training Matrix</h2>
+        <p class="text-muted small mb-0">ISO 9001:2015 Clause 7.2 Competence & Qualification Grid</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'training:course_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-journal-text me-1"></i> Course Catalog
+        </a>
+        <a href="{% url 'training:record_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-clock-history me-1"></i> Training Logs
+        </a>
+        <a href="{% url 'training:record_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i> Log Training Record
+        </a>
+    </div>
+</div>
+
+<!-- KPI Summary Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-semibold">Overall Compliance Rate</span>
+                    <h3 class="fw-bold mb-0 text-primary">{{ completion_rate }}%</h3>
+                </div>
+                <div class="rounded-circle bg-primary-subtle p-3 text-primary fs-4">
+                    <i class="bi bi-pie-chart-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-semibold">Completed & Certified</span>
+                    <h3 class="fw-bold mb-0 text-success">{{ completed_total }}</h3>
+                </div>
+                <div class="rounded-circle bg-success-subtle p-3 text-success fs-4">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-semibold">Expired Qualifications</span>
+                    <h3 class="fw-bold mb-0 text-danger">{{ expired_total }}</h3>
+                </div>
+                <div class="rounded-circle bg-danger-subtle p-3 text-danger fs-4">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-semibold">Training Gaps (Missing)</span>
+                    <h3 class="fw-bold mb-0 text-warning">{{ missing_total }}</h3>
+                </div>
+                <div class="rounded-circle bg-warning-subtle p-3 text-warning fs-4">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Department Filter Toolbar -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body py-2">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-auto">
+                <label class="form-label small fw-bold mb-0"><i class="bi bi-funnel me-1"></i>Filter Department:</label>
+            </div>
+            <div class="col-md-4">
+                <select name="department" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">-- All Departments --</option>
+                    {% for d in departments %}
+                    <option value="{{ d.id }}" {% if selected_dept|stringformat:"s" == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% if selected_dept %}
+            <div class="col-auto">
+                <a href="{% url 'training:matrix' %}" class="btn btn-sm btn-outline-secondary">Clear Filter</a>
+            </div>
+            {% endif %}
+            <div class="col text-end small text-muted">
+                <span class="badge bg-success me-2"><i class="bi bi-check-circle"></i> Certified</span>
+                <span class="badge bg-danger me-2"><i class="bi bi-clock-history"></i> Expired</span>
+                <span class="badge bg-secondary"><i class="bi bi-dash-circle"></i> Not Qualified</span>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Training Matrix Grid -->
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive" style="max-height: 700px;">
+            <table class="table table-bordered table-hover align-middle mb-0 text-center">
+                <thead class="table-dark sticky-top" style="z-index: 2;">
+                    <tr>
+                        <th class="text-start px-3" style="min-width: 220px; background-color: var(--primary-navy);">Employee Name</th>
+                        <th class="text-start px-3" style="min-width: 140px; background-color: var(--primary-navy);">Department</th>
+                        <th class="text-start px-3" style="min-width: 130px; background-color: var(--primary-navy);">Role</th>
+                        {% for c in courses %}
+                        <th class="px-2" style="min-width: 120px; background-color: var(--primary-navy);" title="{{ c.title }} (Validity: {{ c.validity_months }} mo)">
+                            <div class="small fw-bold">{{ c.code }}</div>
+                            <div style="font-size: 0.68rem; font-weight: normal; opacity: 0.85;" class="text-truncate">{{ c.get_course_type_display }}</div>
+                        </th>
+                        {% empty %}
+                        <th class="p-3 text-muted">No Courses registered</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in matrix_rows %}
+                    <tr>
+                        <td class="text-start px-3 fw-bold text-nowrap">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-light border text-primary fw-bold d-flex align-items-center justify-content-center me-2" style="width: 28px; height: 28px; font-size: 0.75rem;">
+                                    {{ row.employee.first_name|first|default:row.employee.username|first|upper }}
+                                </div>
+                                <div>
+                                    <span>{{ row.employee.full_name }}</span>
+                                    <div class="text-muted" style="font-size: 0.7rem;">ID: #{{ row.employee.id }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-start px-3 small text-muted text-nowrap">
+                            {{ row.employee.department.name|default:"--" }}
+                        </td>
+                        <td class="text-start px-3 small text-muted text-nowrap">
+                            {{ row.employee.get_role_display }}
+                        </td>
+                        {% for cell in row.cells %}
+                        <td class="p-1">
+                            {% if cell.status == 'COMPLETED' %}
+                            <span class="badge badge-green w-100 py-1" title="Trained: {{ cell.record.training_date }} | Expiry: {{ cell.record.expiry_date|default:'Never' }}">
+                                <i class="bi bi-check-circle-fill me-1"></i> Valid
+                            </span>
+                            {% elif cell.status == 'EXPIRED' %}
+                            <span class="badge badge-red w-100 py-1" title="Expired: {{ cell.record.expiry_date }}">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i> Expired
+                            </span>
+                            {% else %}
+                            <span class="badge bg-light text-muted border w-100 py-1" title="Not Trained">
+                                <i class="bi bi-dash"></i> Gap
+                            </span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" class="text-center py-4 text-muted">No active personnel found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

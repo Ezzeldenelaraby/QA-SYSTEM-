@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications - QMS Hub{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h3 fw-bold text-navy mb-1">Your Notifications</h2>
+        <p class="text-muted small mb-0">System alerts, workflow assignments, and audit notices</p>
+    </div>
+    {% if unread_count > 0 %}
+    <div>
+        <form method="post" action="{% url 'notifications:mark_all_read' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-check2-all me-1"></i> Mark All as Read
+            </button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+            {% for n in notifications %}
+            <li class="list-group-item p-3 {% if not n.is_read %}bg-light-subtle border-start border-3 border-primary{% endif %}">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="me-3">
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="fw-bold {% if not n.is_read %}text-dark{% else %}text-muted{% endif %}">
+                                {{ n.title }}
+                            </span>
+                            {% if not n.is_read %}
+                            <span class="badge bg-primary-subtle text-primary" style="font-size: 0.7rem;">New</span>
+                            {% endif %}
+                        </div>
+                        <p class="text-secondary small mb-2">{{ n.message }}</p>
+                        <div class="d-flex align-items-center gap-3">
+                            {% if n.link %}
+                            <a href="{{ n.link }}" class="btn btn-sm btn-outline-primary py-0" style="font-size: 0.75rem;">
+                                View Details <i class="bi bi-arrow-right ms-1"></i>
+                            </a>
+                            {% endif %}
+                            <span class="text-muted small" style="font-size: 0.75rem;">
+                                <i class="bi bi-clock me-1"></i>{{ n.created_at|date:"M d, Y H:i" }} ({{ n.created_at|timesince }} ago)
+                            </span>
+                        </div>
+                    </div>
+                    {% if not n.is_read %}
+                    <div>
+                        <button type="button" class="btn btn-sm btn-light border" title="Mark as read" onclick="markNotificationRead({{ n.id }}, this.closest('.list-group-item'))">
+                            <i class="bi bi-check2"></i>
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </li>
+            {% empty %}
+            <li class="list-group-item text-center py-5 text-muted">
+                <i class="bi bi-bell-slash fs-1 d-block text-secondary mb-2"></i>
+                <p class="mb-0">No notifications to display.</p>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}

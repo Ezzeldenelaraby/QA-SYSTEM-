@@ -1,0 +1,375 @@
+{% extends 'base.html' %}
+{% block title %}{{ ncr.ncr_number }}: {{ ncr.product }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge badge-red fs-6">{{ ncr.ncr_number }}</span>
+            <span class="badge {% if ncr.status == 'CLOSED' %}badge-green{% elif ncr.status == 'OPEN' %}badge-red{% else %}badge-yellow{% endif %} fs-6">
+                {{ ncr.get_status_display }}
+            </span>
+            <span class="badge badge-gray">{{ ncr.get_classification_display }} Severity</span>
+        </div>
+        <h1 class="h3 fw-bold text-dark mb-0">{{ ncr.product }} &bull; Lot: {{ ncr.batch_lot }}</h1>
+        <p class="text-muted small mb-0">{{ ncr.department.name }} {% if ncr.process %}&bull; Process: {{ ncr.process.name }}{% endif %} &bull; Reported: {{ ncr.date }} by {{ ncr.reported_by.full_name }}</p>
+    </div>
+
+    <div class="d-flex gap-2">
+        <a href="{% url 'ncr:red_tag' ncr.id %}" target="_blank" class="btn btn-danger btn-sm shadow-sm">
+            <i class="bi bi-tag-fill me-1"></i> Print Hold / Red Tag
+        </a>
+        <a href="{% url 'ncr:list' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+        
+        <!-- Escalate to CAPA -->
+        <form method="POST" action="{% url 'ncr:escalate_capa' ncr.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-primary btn-sm shadow-sm" onclick="return confirm('Generate formal CAPA from this NCR?');">
+                <i class="bi bi-arrow-repeat me-1"></i> Escalate to CAPA
+            </button>
+        </form>
+
+        {% if ncr.status != 'CLOSED' %}
+        <button type="button" class="btn btn-success btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#closeNcrModal">
+            <i class="bi bi-check2-circle me-1"></i> Verify & Close NCR
+        </button>
+        <a href="{% url 'ncr:edit' ncr.id %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-pencil me-1"></i> Edit
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Workflow Stepper Indicator -->
+<div class="card shadow-sm p-3 mb-4 bg-white">
+    <div class="d-flex justify-content-between text-center position-relative">
+        <div class="px-2">
+            <div class="rounded-circle {% if ncr.status in 'OPEN,CONTAINMENT,RCA,CORRECTIVE_ACTION,VERIFICATION,CLOSED' %}bg-primary text-white{% else %}bg-light text-muted{% endif %} d-inline-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px;">1</div>
+            <div class="small fw-semibold mt-1">Open</div>
+        </div>
+        <div class="px-2">
+            <div class="rounded-circle {% if ncr.status in 'CONTAINMENT,RCA,CORRECTIVE_ACTION,VERIFICATION,CLOSED' %}bg-primary text-white{% else %}bg-light text-muted{% endif %} d-inline-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px;">2</div>
+            <div class="small fw-semibold mt-1">Containment</div>
+        </div>
+        <div class="px-2">
+            <div class="rounded-circle {% if ncr.status in 'RCA,CORRECTIVE_ACTION,VERIFICATION,CLOSED' %}bg-primary text-white{% else %}bg-light text-muted{% endif %} d-inline-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px;">3</div>
+            <div class="small fw-semibold mt-1">Root Cause</div>
+        </div>
+        <div class="px-2">
+            <div class="rounded-circle {% if ncr.status in 'CORRECTIVE_ACTION,VERIFICATION,CLOSED' %}bg-primary text-white{% else %}bg-light text-muted{% endif %} d-inline-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px;">4</div>
+            <div class="small fw-semibold mt-1">Correction</div>
+        </div>
+        <div class="px-2">
+            <div class="rounded-circle {% if ncr.status in 'VERIFICATION,CLOSED' %}bg-primary text-white{% else %}bg-light text-muted{% endif %} d-inline-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px;">5</div>
+            <div class="small fw-semibold mt-1">Verification</div>
+        </div>
+        <div class="px-2">
+            <div class="rounded-circle {% if ncr.status == 'CLOSED' %}bg-success text-white{% else %}bg-light text-muted{% endif %} d-inline-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px;">6</div>
+            <div class="small fw-semibold mt-1">Closed</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Problem Definition, Containment & Root Cause -->
+    <div class="col-lg-8">
+        <!-- Problem Description Card -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <span class="fw-bold text-dark"><i class="bi bi-card-text me-2 text-danger"></i> Nonconformity Observation & Requirement</span>
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-3">
+                    <small class="text-muted fw-bold d-block">Defect / Nonconformity Description</small>
+                    <p class="text-dark">{{ ncr.description|linebreaksbr }}</p>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted fw-bold d-block">Violated Requirement / Drawing Tolerance</small>
+                    <div class="p-2 bg-light rounded border text-danger font-monospace small">{{ ncr.requirement }}</div>
+                </div>
+                <div>
+                    <small class="text-muted fw-bold d-block">Objective Evidence / Measured Findings</small>
+                    <p class="small text-muted mb-1">{{ ncr.evidence|default:"-" }}</p>
+                    {% if ncr.evidence_file %}
+                    <a href="{{ ncr.evidence_file.url }}" class="btn btn-sm btn-outline-secondary mt-1" download>
+                        <i class="bi bi-paperclip me-1"></i> Download Evidence Attachment
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Containment & Immediate Correction -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <span class="fw-bold text-dark"><i class="bi bi-shield-lock-fill me-2 text-warning"></i> Immediate Correction & Containment</span>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded border h-100">
+                            <small class="text-muted fw-bold d-block mb-1">Immediate Fix Applied (Quarantine / Scrap)</small>
+                            <p class="small text-dark mb-0">{{ ncr.immediate_correction|default:"Pending definition" }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded border h-100">
+                            <small class="text-muted fw-bold d-block mb-1">Containment Action (Prevent Escape)</small>
+                            <p class="small text-dark mb-0">{{ ncr.containment_action|default:"Pending definition" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 11: 5-Whys Analysis -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-dark"><i class="bi bi-diagram-2 me-2 text-primary"></i> 5-Why Root Cause Analysis</span>
+                <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapse5Why">
+                    <i class="bi bi-pencil-square me-1"></i> Edit 5-Whys
+                </button>
+            </div>
+            <div class="card-body p-4">
+                {% if five_whys %}
+                <ol class="list-group list-group-numbered mb-3">
+                    <li class="list-group-item d-flex justify-content-between align-items-start border-0 ps-0">
+                        <div class="ms-2 me-auto">
+                            <div class="fw-semibold small text-dark">{{ five_whys.why_1|default:"-" }}</div>
+                        </div>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-start border-0 ps-0">
+                        <div class="ms-2 me-auto">
+                            <div class="fw-semibold small text-dark">{{ five_whys.why_2|default:"-" }}</div>
+                        </div>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-start border-0 ps-0">
+                        <div class="ms-2 me-auto">
+                            <div class="fw-semibold small text-dark">{{ five_whys.why_3|default:"-" }}</div>
+                        </div>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-start border-0 ps-0">
+                        <div class="ms-2 me-auto">
+                            <div class="fw-semibold small text-dark">{{ five_whys.why_4|default:"-" }}</div>
+                        </div>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-start border-0 ps-0">
+                        <div class="ms-2 me-auto">
+                            <div class="fw-bold text-danger">{{ five_whys.why_5|default:"-" }}</div>
+                            <small class="text-muted">Direct Root Cause Finding</small>
+                        </div>
+                    </li>
+                </ol>
+                {% else %}
+                <p class="small text-muted mb-3">5-Why analysis has not been populated yet.</p>
+                {% endif %}
+
+                <!-- 5 Why Form Collapse -->
+                <div class="collapse {% if not five_whys %}show{% endif %}" id="collapse5Why">
+                    <form method="POST" action="{% url 'ncr:five_whys' ncr.id %}" class="p-3 bg-light rounded border">
+                        {% csrf_token %}
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold">Problem Statement</label>
+                            {{ five_whys_form.problem_statement }}
+                        </div>
+                        <div class="mb-2">{{ five_whys_form.why_1 }}</div>
+                        <div class="mb-2">{{ five_whys_form.why_2 }}</div>
+                        <div class="mb-2">{{ five_whys_form.why_3 }}</div>
+                        <div class="mb-2">{{ five_whys_form.why_4 }}</div>
+                        <div class="mb-2">{{ five_whys_form.why_5 }}</div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Root Cause Conclusion</label>
+                            {{ five_whys_form.root_cause_conclusion }}
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm px-3">Save 5-Why Analysis</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 11: Fishbone (Ishikawa 6Ms) Diagram -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-dark"><i class="bi bi-bezier2 me-2 text-info"></i> Fishbone (Ishikawa 6Ms) Analysis</span>
+                <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#addFishboneModal">
+                    <i class="bi bi-plus-circle me-1"></i> Add Contributing Cause
+                </button>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    {% for cat_code, causes in fishbone_by_category.items %}
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded border h-100">
+                            <h6 class="fw-bold text-dark small mb-2 border-bottom pb-1">
+                                {% if cat_code == 'MAN' %}<i class="bi bi-person me-1"></i> Man (Operator)
+                                {% elif cat_code == 'MACHINE' %}<i class="bi bi-cpu me-1"></i> Machine (Tooling)
+                                {% elif cat_code == 'METHOD' %}<i class="bi bi-file-text me-1"></i> Method (Procedure)
+                                {% elif cat_code == 'MATERIAL' %}<i class="bi bi-box-seam me-1"></i> Material
+                                {% elif cat_code == 'MEASUREMENT' %}<i class="bi bi-rulers me-1"></i> Measurement
+                                {% else %}<i class="bi bi-thermometer-half me-1"></i> Environment
+                                {% endif %}
+                            </h6>
+                            <ul class="list-unstyled small mb-0">
+                                {% for c in causes %}
+                                <li class="py-1">
+                                    {% if c.is_primary %}<span class="badge badge-red me-1">Primary</span>{% endif %}
+                                    {{ c.cause_description }}
+                                </li>
+                                {% empty %}
+                                <li class="text-muted fst-italic">No causes identified</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Verification & Sign-off Details -->
+        {% if ncr.status == 'CLOSED' %}
+        <div class="card shadow-sm border-success">
+            <div class="card-header bg-success-subtle text-success fw-bold">
+                <i class="bi bi-check-circle-fill me-2"></i> Quality Assurance Verification & Sign-off
+            </div>
+            <div class="card-body p-4 small">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <strong>Verified By:</strong> {{ ncr.verified_by.full_name }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Closed Date:</strong> {{ ncr.closed_date }}
+                    </div>
+                    <div class="col-12">
+                        <strong>Verification Notes:</strong>
+                        <p class="text-muted mt-1 mb-0">{{ ncr.verification_notes|linebreaksbr }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Right Column: Governance & Origin -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <span class="fw-bold text-dark"><i class="bi bi-sliders me-2"></i> Governance Details</span>
+            </div>
+            <div class="card-body p-4 small">
+                <div class="mb-3">
+                    <small class="text-muted d-block">Originating Source</small>
+                    <span class="badge badge-gray">{{ ncr.get_source_display }}</span>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted d-block">Assigned Responsible Engineer</small>
+                    <span class="fw-bold text-dark">{{ ncr.responsible_person.full_name }}</span>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted d-block">Target Due Date</small>
+                    <span class="fw-semibold text-danger">{{ ncr.due_date }}</span>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted d-block">Root Cause Summary</small>
+                    <p class="small text-dark mb-0">{{ ncr.root_cause_summary|default:"Investigation in progress" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Linked CAPAs -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <span class="fw-bold text-dark"><i class="bi bi-arrow-repeat me-2 text-primary"></i> Linked CAPAs ({{ ncr.capas.count }})</span>
+            </div>
+            <div class="card-body p-3">
+                <ul class="list-unstyled mb-0 small">
+                    {% for c in ncr.capas.all %}
+                    <li class="py-2 border-bottom">
+                        <a href="{% url 'capa:detail' c.id %}" class="fw-bold text-primary text-decoration-none">{{ c.capa_number }}</a>
+                        <div class="text-muted">{{ c.title }}</div>
+                    </li>
+                    {% empty %}
+                    <li class="text-muted text-center py-2">No CAPAs linked to this report yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add Fishbone Cause -->
+<div class="modal fade" id="addFishboneModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{% url 'ncr:add_fishbone' ncr.id %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Add Fishbone Cause for {{ ncr.ncr_number }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Ishikawa 6M Category *</label>
+                        {{ fishbone_form.category }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Cause Description *</label>
+                        {{ fishbone_form.cause_description }}
+                    </div>
+                    <div class="form-check">
+                        {{ fishbone_form.is_primary }}
+                        <label class="form-check-label small fw-semibold">Mark as Confirmed Primary Root Cause</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Cause</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Verify & Close NCR -->
+<div class="modal fade" id="closeNcrModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="{% url 'ncr:close' ncr.id %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold text-success">Formal QA Sign-off & Closure: {{ ncr.ncr_number }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning small">
+                        <strong>Quality Compliance Note:</strong> ISO 9001 requires complete containment, root cause identification, and verification of corrective actions before closing nonconformities.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Immediate Correction Applied *</label>
+                        {{ close_form.immediate_correction }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Containment Action *</label>
+                        {{ close_form.containment_action }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Root Cause Summary *</label>
+                        {{ close_form.root_cause_summary }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">QA Verification Findings & Formal Sign-off *</label>
+                        {{ close_form.verification_notes }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success px-4">Verify & Formally Close NCR</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

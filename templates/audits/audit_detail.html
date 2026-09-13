@@ -1,0 +1,299 @@
+{% extends 'base.html' %}
+{% block title %}{{ audit.audit_number }}: {{ audit.audit_title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge badge-primary fs-6">{{ audit.audit_number }}</span>
+            <span class="badge {% if audit.status == 'CLOSED' %}badge-green{% elif audit.status == 'IN_PROGRESS' %}badge-blue{% else %}badge-yellow{% endif %} fs-6">
+                {{ audit.get_status_display }}
+            </span>
+        </div>
+        <h1 class="h3 fw-bold text-dark mb-0">{{ audit.audit_title }}</h1>
+        <p class="text-muted small mb-0">{{ audit.department.name }} {% if audit.process %}&bull; Process: {{ audit.process.name }}{% endif %} &bull; Date: {{ audit.audit_date }}</p>
+    </div>
+
+    <div class="d-flex gap-2">
+        <a href="{% url 'audits:list' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+        <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addChecklistModal">
+            <i class="bi bi-card-checklist me-1"></i> Add Checklist Item
+        </button>
+        <button type="button" class="btn btn-danger btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#addFindingModal">
+            <i class="bi bi-exclamation-triangle me-1"></i> Log Finding
+        </button>
+        <a href="{% url 'audits:edit' audit.id %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-pencil me-1"></i> Edit
+        </a>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <!-- Audit Scope & Criteria -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <span class="fw-bold text-dark"><i class="bi bi-info-circle me-2 text-primary"></i> Audit Scope & Criteria</span>
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-3">
+                    <small class="text-muted fw-bold d-block">Scope & Boundaries</small>
+                    <p class="small text-dark mb-0">{{ audit.scope|linebreaksbr }}</p>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted fw-bold d-block">Audit Criteria / Standards</small>
+                    <p class="small text-muted mb-0">{{ audit.criteria }}</p>
+                </div>
+                {% if audit.summary_notes %}
+                <div>
+                    <small class="text-muted fw-bold d-block">Executive Summary Notes</small>
+                    <p class="small text-dark mb-0">{{ audit.summary_notes|linebreaksbr }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Auditor Team Card -->
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <span class="fw-bold text-dark"><i class="bi bi-people me-2"></i> Audit Team</span>
+            </div>
+            <div class="card-body p-4 small">
+                <div class="mb-3">
+                    <small class="text-muted d-block">Lead Auditor</small>
+                    <strong class="text-dark">{{ audit.lead_auditor.full_name }}</strong>
+                </div>
+                <div>
+                    <small class="text-muted d-block">Audit Team Members</small>
+                    <ul class="list-unstyled mb-0">
+                        {% for mem in audit.audit_team.all %}
+                        <li class="py-1"><i class="bi bi-person me-1 text-muted"></i> {{ mem.full_name }}</li>
+                        {% empty %}
+                        <li class="text-muted">Lead auditor solo</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Findings Section -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <span class="fw-bold text-danger"><i class="bi bi-exclamation-octagon-fill me-2"></i> Audit Findings ({{ findings.count }})</span>
+        <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#addFindingModal">
+            <i class="bi bi-plus-lg me-1"></i> Log Finding
+        </button>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Finding Number</th>
+                    <th>Type</th>
+                    <th>Clause</th>
+                    <th>Description & Evidence</th>
+                    <th>Responsible</th>
+                    <th>Due Date</th>
+                    <th>Linked Actions</th>
+                    <th class="text-end">1-Click Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in findings %}
+                <tr>
+                    <td class="fw-bold text-dark">{{ f.finding_number }}</td>
+                    <td>
+                        <span class="badge {% if f.finding_type == 'MAJOR_NC' %}badge-red{% elif f.finding_type == 'MINOR_NC' %}badge-yellow{% elif f.finding_type == 'OBSERVATION' %}badge-blue{% else %}badge-gray{% endif %}">
+                            {{ f.get_finding_type_display }}
+                        </span>
+                    </td>
+                    <td class="small font-monospace">{{ f.clause }}</td>
+                    <td class="small" style="max-width: 250px;">
+                        <div class="fw-semibold text-dark">{{ f.description }}</div>
+                        <small class="text-muted">{{ f.evidence }}</small>
+                    </td>
+                    <td class="small">{{ f.responsible_person.full_name }}</td>
+                    <td class="small text-muted">{{ f.due_date }}</td>
+                    <td>
+                        {% if f.linked_ncr %}
+                        <a href="{% url 'ncr:detail' f.linked_ncr.id %}" class="badge badge-red text-decoration-none d-block mb-1">
+                            <i class="bi bi-x-octagon me-1"></i> {{ f.linked_ncr.ncr_number }}
+                        </a>
+                        {% endif %}
+                        {% if f.linked_action %}
+                        <a href="{% url 'actions:detail' f.linked_action.id %}" class="badge badge-blue text-decoration-none d-block">
+                            <i class="bi bi-check2-square me-1"></i> {{ f.linked_action.action_number }}
+                        </a>
+                        {% endif %}
+                        {% if not f.linked_ncr and not f.linked_action %}
+                        <span class="text-muted small">None linked</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <div class="btn-group btn-group-sm">
+                            {% if not f.linked_ncr %}
+                            <a href="{% url 'audits:finding_create_ncr' f.id %}" class="btn btn-outline-danger" title="Create NCR directly">
+                                <i class="bi bi-exclamation-octagon"></i> Raise NCR
+                            </a>
+                            {% endif %}
+                            {% if not f.linked_action %}
+                            <a href="{% url 'audits:finding_create_action' f.id %}" class="btn btn-outline-primary" title="Assign Action directly">
+                                <i class="bi bi-check2-square"></i> Assign Action
+                            </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-3">No findings logged for this audit. Perfect conformity!</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Checklist Section -->
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <span class="fw-bold text-dark"><i class="bi bi-card-checklist me-2 text-primary"></i> Audit Checklist & ISO Clause Compliance</span>
+        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addChecklistModal">
+            <i class="bi bi-plus-lg me-1"></i> Add Checklist Item
+        </button>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Clause</th>
+                    <th>Question / Requirement</th>
+                    <th>Audit Evidence Observed</th>
+                    <th>Result</th>
+                    <th>Auditor Remarks</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in checklist_items %}
+                <tr>
+                    <td class="fw-bold small text-primary font-monospace">{{ item.iso_clause }}</td>
+                    <td class="small fw-semibold text-dark">
+                        {{ item.question }}
+                        {% if item.requirement %}<br><small class="text-muted">{{ item.requirement }}</small>{% endif %}
+                    </td>
+                    <td class="small text-muted">{{ item.evidence|default:"-" }}</td>
+                    <td>
+                        <span class="badge {% if item.result == 'CONFORMITY' %}badge-green{% elif item.result == 'NONCONFORMITY' %}badge-red{% elif item.result == 'OBSERVATION' %}badge-yellow{% else %}badge-blue{% endif %}">
+                            {{ item.get_result_display }}
+                        </span>
+                    </td>
+                    <td class="small text-muted">{{ item.comment|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-3">No checklist items logged yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal: Add Checklist Item -->
+<div class="modal fade" id="addChecklistModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{% url 'audits:add_checklist' audit.id %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Add Checklist Item</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">ISO Standard Clause *</label>
+                        {{ checklist_form.iso_clause }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Audit Question *</label>
+                        {{ checklist_form.question }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Standard Requirement</label>
+                        {{ checklist_form.requirement }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Sampled Evidence</label>
+                        {{ checklist_form.evidence }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Result *</label>
+                        {{ checklist_form.result }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Auditor Comment</label>
+                        {{ checklist_form.comment }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add Finding -->
+<div class="modal fade" id="addFindingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="{% url 'audits:add_finding' audit.id %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold text-danger">Record Audit Finding for {{ audit.audit_number }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Finding Type *</label>
+                            {{ finding_form.finding_type }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">ISO Clause Violated *</label>
+                            {{ finding_form.clause }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Finding Description *</label>
+                            {{ finding_form.description }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Objective Evidence *</label>
+                            {{ finding_form.evidence }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Responsible Person *</label>
+                            {{ finding_form.responsible_person }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Resolution Due Date *</label>
+                            {{ finding_form.due_date }}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Log Finding</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

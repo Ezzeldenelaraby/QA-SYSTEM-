@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold text-dark mb-1">{{ title }}</h1>
+        <p class="text-muted small mb-0">ISO 9001:2015 Clause 6.1 Process Risk and Opportunity Assessment.</p>
+    </div>
+    <a href="{% url 'risks:list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to Risk Register
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <form method="POST">
+                    {% csrf_token %}
+                    {% if form.errors %}
+                    <div class="alert alert-danger small py-2">Please correct the highlighted fields.</div>
+                    {% endif %}
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Process *</label>
+                            {{ form.process }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Department *</label>
+                            {{ form.department }}
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Risk Failure Event Description *</label>
+                            {{ form.description }}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Root Causes / Vulnerabilities *</label>
+                            {{ form.cause }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Potential Impact / Severity Consequence *</label>
+                            {{ form.potential_consequence }}
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Current Existing Controls</label>
+                            {{ form.existing_control }}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Likelihood of Occurrence (1 - 5) *</label>
+                            {{ form.likelihood }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Severity of Impact (1 - 5) *</label>
+                            {{ form.severity }}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Responsible Person *</label>
+                            {{ form.responsible_person }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Mitigation Due Date</label>
+                            {{ form.due_date }}
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Risk Status</label>
+                            {{ form.status }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Review Date</label>
+                            {{ form.review_date }}
+                        </div>
+                        <div class="col-md-4 d-flex align-items-center mt-4">
+                            <div class="form-check">
+                                {{ form.action_required }}
+                                <label class="form-check-label small fw-semibold">Corrective Action Required</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Mitigation Strategy / Effectiveness</label>
+                            {{ form.effectiveness }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Objective Evidence</label>
+                            {{ form.evidence }}
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                        <a href="{% url 'risks:list' %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4 shadow-sm">Save Risk Assessment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Risk Score preview card -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm p-4 text-center bg-light border-0">
+            <h6 class="fw-bold text-dark mb-2">Live Calculated Risk Score</h6>
+            <div id="riskScoreDisplay" class="display-3 fw-bold text-primary my-2">9</div>
+            <div class="mb-3">
+                <span id="riskLevelDisplay" class="badge badge-yellow fs-6">Medium</span>
+            </div>
+            <p class="small text-muted mb-0">Score = Likelihood &times; Severity.<br>Calculated in real-time as you select ratings.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

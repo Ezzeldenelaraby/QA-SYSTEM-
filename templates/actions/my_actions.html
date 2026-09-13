@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}My Assigned Actions{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold text-dark mb-1">My Personal Actions</h1>
+        <p class="text-muted small mb-0">Track tasks, corrective actions, and preventive measures assigned to you.</p>
+    </div>
+    <a href="{% url 'actions:list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-list-task me-1"></i> View All Company Actions
+    </a>
+</div>
+
+<!-- KPI Cards for My Actions -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card metric-card border-blue shadow-sm p-3">
+            <small class="text-muted fw-bold">My Open Actions</small>
+            <div class="h3 fw-bold text-primary mb-0 mt-1">{{ my_open.count }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card metric-card border-yellow shadow-sm p-3">
+            <small class="text-muted fw-bold">Due Today / Next 7 Days</small>
+            <div class="h3 fw-bold text-warning mb-0 mt-1">{{ due_today.count|add:due_week.count }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card metric-card border-red shadow-sm p-3">
+            <small class="text-muted fw-bold">Overdue Actions</small>
+            <div class="h3 fw-bold text-danger mb-0 mt-1">{{ overdue.count }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card metric-card border-green shadow-sm p-3">
+            <small class="text-muted fw-bold">Completed Actions</small>
+            <div class="h3 fw-bold text-success mb-0 mt-1">{{ completed.count }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs for Personal Tasks -->
+<div class="card shadow-sm">
+    <div class="card-header bg-white border-bottom p-0">
+        <ul class="nav nav-tabs card-header-tabs m-0 border-0" id="myActionTabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active py-3 px-4 fw-semibold small" data-bs-toggle="tab" data-bs-target="#tab-open" type="button">
+                    <i class="bi bi-clock me-1"></i> Open & In Progress ({{ my_open.count }})
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link py-3 px-4 fw-semibold small text-danger" data-bs-toggle="tab" data-bs-target="#tab-overdue" type="button">
+                    <i class="bi bi-exclamation-octagon-fill me-1"></i> Overdue ({{ overdue.count }})
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link py-3 px-4 fw-semibold small" data-bs-toggle="tab" data-bs-target="#tab-week" type="button">
+                    <i class="bi bi-calendar-event me-1"></i> Due This Week ({{ due_week.count }})
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link py-3 px-4 fw-semibold small text-success" data-bs-toggle="tab" data-bs-target="#tab-completed" type="button">
+                    <i class="bi bi-check2-all me-1"></i> Completed ({{ completed.count }})
+                </button>
+            </li>
+        </ul>
+    </div>
+
+    <div class="card-body p-0">
+        <div class="tab-content" id="myActionTabsContent">
+            <!-- Open Tab -->
+            <div class="tab-pane fade show active" id="tab-open">
+                {% include 'actions/partials/action_table.html' with action_qs=my_open %}
+            </div>
+
+            <!-- Overdue Tab -->
+            <div class="tab-pane fade" id="tab-overdue">
+                {% include 'actions/partials/action_table.html' with action_qs=overdue %}
+            </div>
+
+            <!-- Due Week Tab -->
+            <div class="tab-pane fade" id="tab-week">
+                {% include 'actions/partials/action_table.html' with action_qs=due_week %}
+            </div>
+
+            <!-- Completed Tab -->
+            <div class="tab-pane fade" id="tab-completed">
+                {% include 'actions/partials/action_table.html' with action_qs=completed %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block title %}Shop Floor Quality Inspections{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold text-dark mb-1">Shop Floor Quality Inspections</h1>
+        <p class="text-muted small mb-0">First Article, in-process, and final inspection verification records.</p>
+    </div>
+    <a href="{% url 'inspections:create' %}" class="btn btn-primary btn-sm px-3 shadow-sm">
+        <i class="bi bi-plus-lg me-1"></i> New Inspection Sheet
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body p-3">
+        <form method="GET" class="row g-3 align-items-center">
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Overall Inspection Result</label>
+                <select name="result" class="form-select form-select-sm">
+                    <option value="">-- All Results --</option>
+                    <option value="OK" {% if selected_result == 'OK' %}selected{% endif %}>Conforming (OK)</option>
+                    <option value="NG" {% if selected_result == 'NG' %}selected{% endif %}>Nonconforming (NG)</option>
+                    <option value="PENDING" {% if selected_result == 'PENDING' %}selected{% endif %}>Pending</option>
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary btn-sm px-3"><i class="bi bi-funnel me-1"></i> Filter</button>
+                <a href="{% url 'inspections:list' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-circle me-1"></i> Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Inspection #</th>
+                    <th>Date & Shift</th>
+                    <th>Part / Product</th>
+                    <th>Lot / Batch</th>
+                    <th>Machine</th>
+                    <th>Inspector</th>
+                    <th>Overall Result</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in inspections %}
+                <tr>
+                    <td class="fw-bold"><a href="{% url 'inspections:detail' i.id %}" class="text-primary text-decoration-none">{{ i.inspection_number }}</a></td>
+                    <td class="small">
+                        {{ i.date }}<br>
+                        <span class="text-muted">{{ i.get_shift_display }}</span>
+                    </td>
+                    <td class="fw-semibold text-dark small">{{ i.product }}</td>
+                    <td class="small font-monospace">{{ i.batch_lot }}</td>
+                    <td class="small text-muted">{{ i.machine }}</td>
+                    <td class="small">{{ i.inspector.full_name }}</td>
+                    <td>
+                        {% if i.overall_result == 'OK' %}
+                        <span class="badge badge-green"><i class="bi bi-check-circle me-1"></i> OK</span>
+                        {% elif i.overall_result == 'NG' %}
+                        <span class="badge badge-red"><i class="bi bi-x-circle me-1"></i> NG</span>
+                        {% else %}
+                        <span class="badge badge-yellow">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{% url 'inspections:detail' i.id %}" class="btn btn-outline-primary btn-sm" title="View Inspection Checkpoints">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-4">No inspection sheets found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

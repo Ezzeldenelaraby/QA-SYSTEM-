@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}System Users & Roles{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold text-dark mb-1">User & Role Management</h1>
+        <p class="text-muted small mb-0">Role-Based Access Control (RBAC) covering 10 distinct manufacturing quality roles.</p>
+    </div>
+    {% if user.is_super_admin or user.is_qa_manager %}
+    <a href="{% url 'accounts:user_create' %}" class="btn btn-primary btn-sm px-3 shadow-sm">
+        <i class="bi bi-person-plus-fill me-1"></i> Add New User
+    </a>
+    {% endif %}
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Username / Email</th>
+                    <th>Department</th>
+                    <th>Job Title</th>
+                    <th>Role (RBAC)</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2 fw-bold" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                                {{ u.first_name|first|default:u.username|first|upper }}
+                            </div>
+                            <span class="fw-bold text-dark">{{ u.full_name }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="small fw-semibold">{{ u.username }}</div>
+                        <div class="text-muted" style="font-size: 0.75rem;">{{ u.email|default:"-" }}</div>
+                    </td>
+                    <td class="small">{{ u.department.name|default:"-" }}</td>
+                    <td class="small text-muted">{{ u.job_title|default:"-" }}</td>
+                    <td>
+                        <span class="badge {% if 'ADMIN' in u.role or 'MANAGER' in u.role %}badge-blue{% else %}badge-gray{% endif %}">
+                            {{ u.get_role_display }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if u.is_active %}
+                        <span class="badge badge-green"><i class="bi bi-check-circle me-1"></i> Active</span>
+                        {% else %}
+                        <span class="badge badge-red"><i class="bi bi-x-circle me-1"></i> Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        {% if user.is_super_admin or user.is_qa_manager %}
+                        <a href="{% url 'accounts:user_edit' u.id %}" class="btn btn-outline-secondary btn-sm" title="Edit Privileges">
+                            <i class="bi bi-pencil-square"></i>
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

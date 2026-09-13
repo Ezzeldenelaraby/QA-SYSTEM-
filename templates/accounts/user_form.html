@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold text-dark mb-1">{{ title }}</h1>
+        <p class="text-muted small mb-0">Configure user identity, system role permissions, and manufacturing department assignment.</p>
+    </div>
+    <a href="{% url 'accounts:user_list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to Users
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <form method="POST">
+                    {% csrf_token %}
+                    {% if form.errors %}
+                    <div class="alert alert-danger small py-2">
+                        Please correct the errors below.
+                    </div>
+                    {% endif %}
+
+                    <div class="row g-3">
+                        {% if not target_user %}
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Username *</label>
+                            {{ form.username }}
+                            <div class="text-danger small">{{ form.username.errors }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Password *</label>
+                            {{ form.password }}
+                            <div class="text-danger small">{{ form.password.errors }}</div>
+                        </div>
+                        {% endif %}
+
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">First Name</label>
+                            {{ form.first_name }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Last Name</label>
+                            {{ form.last_name }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Email</label>
+                            {{ form.email }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Phone Number</label>
+                            {{ form.phone }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Department *</label>
+                            {{ form.department }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Job Title</label>
+                            {{ form.job_title }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Role (RBAC) *</label>
+                            {{ form.role }}
+                            <div class="form-text">Governs approval authority and workflow sign-offs.</div>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-center mt-4">
+                            <div class="form-check">
+                                {{ form.is_active }}
+                                <label class="form-check-label fw-semibold small">Account Active & Enabled</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                        <a href="{% url 'accounts:user_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4 shadow-sm">Save User</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

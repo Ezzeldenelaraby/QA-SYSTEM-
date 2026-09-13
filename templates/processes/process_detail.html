@@ -1,0 +1,392 @@
+{% extends 'base.html' %}
+{% block title %}{{ process.code }}: {{ process.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge badge-blue fs-6">{{ process.code }}</span>
+            <span class="badge {% if process.status == 'ACTIVE' %}badge-green{% elif process.status == 'UNDER_REVIEW' %}badge-yellow{% else %}badge-gray{% endif %}">
+                {{ process.get_status_display }}
+            </span>
+        </div>
+        <h1 class="h3 fw-bold text-dark mb-0">{{ process.name }}</h1>
+        <p class="text-muted small mb-0">{{ process.department.name }} &bull; Owner: {{ process.process_owner.full_name|default:"Unassigned" }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'processes:list' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+        {% if user.is_super_admin or user.is_qa_staff or user == process.process_owner %}
+        <a href="{% url 'processes:edit' process.id %}" class="btn btn-primary btn-sm px-3 shadow-sm">
+            <i class="bi bi-pencil-square me-1"></i> Edit Process
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 360 Degree Traceability Tabs -->
+<div class="card shadow-sm">
+    <div class="card-header bg-white border-bottom p-0">
+        <ul class="nav nav-tabs card-header-tabs m-0 border-0" id="processTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active py-3 px-4 fw-semibold small" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">
+                    <i class="bi bi-info-circle me-1"></i> Overview & Parameters
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link py-3 px-4 fw-semibold small" id="docs-tab" data-bs-toggle="tab" data-bs-target="#docs" type="button" role="tab">
+                    <i class="bi bi-file-earmark-text me-1"></i> Documents ({{ documents.count }})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link py-3 px-4 fw-semibold small" id="risks-tab" data-bs-toggle="tab" data-bs-target="#risks" type="button" role="tab">
+                    <i class="bi bi-exclamation-triangle me-1"></i> Risks ({{ risks.count }})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link py-3 px-4 fw-semibold small" id="objectives-tab" data-bs-toggle="tab" data-bs-target="#objectives" type="button" role="tab">
+                    <i class="bi bi-bullseye me-1"></i> Objectives ({{ objectives.count }})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link py-3 px-4 fw-semibold small" id="ncrs-tab" data-bs-toggle="tab" data-bs-target="#ncrs" type="button" role="tab">
+                    <i class="bi bi-x-octagon me-1"></i> NCRs ({{ ncrs.count }})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link py-3 px-4 fw-semibold small" id="audits-tab" data-bs-toggle="tab" data-bs-target="#audits" type="button" role="tab">
+                    <i class="bi bi-clipboard-check me-1"></i> Audits ({{ audits.count }})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link py-3 px-4 fw-semibold small" id="actions-tab" data-bs-toggle="tab" data-bs-target="#actions" type="button" role="tab">
+                    <i class="bi bi-check2-square me-1"></i> Actions ({{ actions.count }})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link py-3 px-4 fw-semibold small" id="inspections-tab" data-bs-toggle="tab" data-bs-target="#inspections" type="button" role="tab">
+                    <i class="bi bi-card-checklist me-1"></i> Inspections ({{ inspections.count }})
+                </button>
+            </li>
+        </ul>
+    </div>
+
+    <div class="card-body p-4">
+        <div class="tab-content" id="processTabContent">
+            <!-- 1. Overview Tab -->
+            <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                <div class="mb-4">
+                    <h6 class="fw-bold text-dark mb-2">Process Description</h6>
+                    <p class="text-muted small">{{ process.description }}</p>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded border">
+                            <h6 class="fw-bold text-dark small mb-2"><i class="bi bi-box-arrow-in-right text-primary me-2"></i> Inputs</h6>
+                            <p class="small text-muted mb-0">{{ process.inputs|linebreaksbr|default:"Not specified" }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded border">
+                            <h6 class="fw-bold text-dark small mb-2"><i class="bi bi-box-arrow-right text-success me-2"></i> Outputs</h6>
+                            <p class="small text-muted mb-0">{{ process.outputs|linebreaksbr|default:"Not specified" }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded border">
+                            <h6 class="fw-bold text-dark small mb-2"><i class="bi bi-gear-wide-connected text-secondary me-2"></i> Major Equipment & Machinery</h6>
+                            <p class="small text-muted mb-0">{{ process.equipment|linebreaksbr|default:"Not specified" }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded border">
+                            <h6 class="fw-bold text-dark small mb-2"><i class="bi bi-wrench-adjustable text-secondary me-2"></i> Tooling & Fixtures</h6>
+                            <p class="small text-muted mb-0">{{ process.tools|linebreaksbr|default:"Not specified" }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded border">
+                            <h6 class="fw-bold text-dark small mb-2"><i class="bi bi-sliders text-danger me-2"></i> Critical Process Parameters</h6>
+                            <p class="small text-muted mb-0">{{ process.parameters|linebreaksbr|default:"Not specified" }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded border">
+                            <h6 class="fw-bold text-dark small mb-2"><i class="bi bi-geo-alt text-warning me-2"></i> Inspection Points & Quality Gates</h6>
+                            <div class="small text-muted mb-2"><strong>Checkpoints:</strong> {{ process.inspection_points|default:"-" }}</div>
+                            <div class="small text-muted"><strong>Quality Gates:</strong> {{ process.quality_gates|default:"-" }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Documents Tab -->
+            <div class="tab-pane fade" id="docs" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold text-dark mb-0">Controlled Documents & Work Instructions</h6>
+                    <a href="{% url 'documents:create' %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-plus me-1"></i> Attach New Document</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Doc Number</th>
+                                <th>Title</th>
+                                <th>Type</th>
+                                <th>Revision</th>
+                                <th>Status</th>
+                                <th>Effective Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for doc in documents %}
+                            <tr>
+                                <td class="fw-bold"><a href="{% url 'documents:detail' doc.id %}" class="text-primary text-decoration-none">{{ doc.document_number }}</a></td>
+                                <td class="fw-semibold small">{{ doc.title }}</td>
+                                <td><span class="badge badge-gray">{{ doc.get_document_type_display }}</span></td>
+                                <td class="small">Rev {{ doc.revision_number }}</td>
+                                <td><span class="badge badge-green">{{ doc.get_status_display }}</span></td>
+                                <td class="small text-muted">{{ doc.effective_date|default:"-" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="6" class="text-center text-muted py-3">No documents linked to this process.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 3. Risks Tab -->
+            <div class="tab-pane fade" id="risks" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold text-dark mb-0">Process Risk Register & FMEA</h6>
+                    <a href="{% url 'risks:create' %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-plus me-1"></i> Log Risk</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Risk ID</th>
+                                <th>Description</th>
+                                <th>Score (L x S)</th>
+                                <th>Risk Level</th>
+                                <th>Status</th>
+                                <th>Responsible</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for rsk in risks %}
+                            <tr>
+                                <td class="fw-bold"><a href="{% url 'risks:detail' rsk.id %}" class="text-primary text-decoration-none">{{ rsk.risk_id }}</a></td>
+                                <td class="small">{{ rsk.description|truncatewords:15 }}</td>
+                                <td class="fw-bold text-center">{{ rsk.risk_score }} <small class="text-muted">({{ rsk.likelihood }}x{{ rsk.severity }})</small></td>
+                                <td>
+                                    <span class="badge {% if rsk.risk_level == 'CRITICAL' or rsk.risk_level == 'HIGH' %}badge-red{% elif rsk.risk_level == 'MEDIUM' %}badge-yellow{% else %}badge-green{% endif %}">
+                                        {{ rsk.get_risk_level_display }}
+                                    </span>
+                                </td>
+                                <td><span class="badge badge-blue">{{ rsk.get_status_display }}</span></td>
+                                <td class="small">{{ rsk.responsible_person.full_name }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="6" class="text-center text-muted py-3">No risks registered for this process.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 4. Objectives Tab -->
+            <div class="tab-pane fade" id="objectives" role="tabpanel">
+                <h6 class="fw-bold text-dark mb-3">Quality Objectives & Performance Metrics</h6>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Objective</th>
+                                <th>KPI</th>
+                                <th>Target</th>
+                                <th>Actual</th>
+                                <th>Achievement %</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for obj in objectives %}
+                            <tr>
+                                <td class="fw-bold"><a href="{% url 'objectives:detail' obj.id %}" class="text-primary text-decoration-none">{{ obj.code }}</a></td>
+                                <td class="fw-semibold small">{{ obj.name }}</td>
+                                <td class="small text-muted">{{ obj.kpi }}</td>
+                                <td class="small fw-semibold">{{ obj.target }} {{ obj.unit }}</td>
+                                <td class="small fw-bold">{{ obj.actual_result|default:"-" }} {{ obj.unit }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="progress flex-grow-1" style="height: 6px;">
+                                            <div class="progress-bar bg-success" style="width: {{ obj.achievement_percentage }}%"></div>
+                                        </div>
+                                        <span class="small fw-bold">{{ obj.achievement_percentage }}%</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge badge-green">{{ obj.get_status_display }}</span></td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="7" class="text-center text-muted py-3">No objectives tied directly to this process.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 5. NCRs Tab -->
+            <div class="tab-pane fade" id="ncrs" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold text-dark mb-0">Nonconformity Reports (NCRs)</h6>
+                    <a href="{% url 'ncr:create' %}" class="btn btn-outline-danger btn-sm"><i class="bi bi-plus me-1"></i> Report NCR</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>NCR Number</th>
+                                <th>Date</th>
+                                <th>Product / Batch</th>
+                                <th>Classification</th>
+                                <th>Status</th>
+                                <th>Responsible</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ncr in ncrs %}
+                            <tr>
+                                <td class="fw-bold"><a href="{% url 'ncr:detail' ncr.id %}" class="text-danger text-decoration-none">{{ ncr.ncr_number }}</a></td>
+                                <td class="small text-muted">{{ ncr.date }}</td>
+                                <td class="small fw-semibold">{{ ncr.product }} <small class="text-muted">({{ ncr.batch_lot }})</small></td>
+                                <td><span class="badge badge-red">{{ ncr.get_classification_display }}</span></td>
+                                <td><span class="badge badge-yellow">{{ ncr.get_status_display }}</span></td>
+                                <td class="small">{{ ncr.responsible_person.full_name }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="6" class="text-center text-muted py-3">Zero nonconformities registered for this process.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 6. Audits Tab -->
+            <div class="tab-pane fade" id="audits" role="tabpanel">
+                <h6 class="fw-bold text-dark mb-3">Internal Audits Performed on Process</h6>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Audit Number</th>
+                                <th>Title</th>
+                                <th>Audit Date</th>
+                                <th>Lead Auditor</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for aud in audits %}
+                            <tr>
+                                <td class="fw-bold"><a href="{% url 'audits:detail' aud.id %}" class="text-primary text-decoration-none">{{ aud.audit_number }}</a></td>
+                                <td class="small fw-semibold">{{ aud.audit_title }}</td>
+                                <td class="small text-muted">{{ aud.audit_date }}</td>
+                                <td class="small">{{ aud.lead_auditor.full_name }}</td>
+                                <td><span class="badge badge-green">{{ aud.get_status_display }}</span></td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center text-muted py-3">No audits logged for this process.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 7. Actions Tab -->
+            <div class="tab-pane fade" id="actions" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold text-dark mb-0">Active Corrective & Improvement Actions</h6>
+                    <a href="{% url 'actions:create' %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-plus me-1"></i> New Action</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Action #</th>
+                                <th>Title</th>
+                                <th>Priority</th>
+                                <th>Assigned To</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for act in actions %}
+                            <tr>
+                                <td class="fw-bold"><a href="{% url 'actions:detail' act.id %}" class="text-primary text-decoration-none">{{ act.action_number }}</a></td>
+                                <td class="small fw-semibold">{{ act.title }}</td>
+                                <td><span class="badge {% if act.priority == 'CRITICAL' or act.priority == 'HIGH' %}badge-red{% else %}badge-yellow{% endif %}">{{ act.get_priority_display }}</span></td>
+                                <td class="small">{{ act.assigned_to.full_name }}</td>
+                                <td class="small text-muted">{{ act.due_date }}</td>
+                                <td><span class="badge {% if act.status == 'OVERDUE' %}badge-red{% elif act.status == 'COMPLETED' %}badge-green{% else %}badge-blue{% endif %}">{{ act.get_status_display }}</span></td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="6" class="text-center text-muted py-3">No active actions assigned to this process.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 8. Inspections Tab -->
+            <div class="tab-pane fade" id="inspections" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold text-dark mb-0">Shop Floor Quality Inspection Log</h6>
+                    <a href="{% url 'inspections:create' %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-plus me-1"></i> New Inspection Sheet</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Inspection #</th>
+                                <th>Date</th>
+                                <th>Product / Lot</th>
+                                <th>Machine</th>
+                                <th>Inspector</th>
+                                <th>Overall Result</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for insp in inspections %}
+                            <tr>
+                                <td class="fw-bold"><a href="{% url 'inspections:detail' insp.id %}" class="text-primary text-decoration-none">{{ insp.inspection_number }}</a></td>
+                                <td class="small text-muted">{{ insp.date }}</td>
+                                <td class="small fw-semibold">{{ insp.product }} <small class="text-muted">({{ insp.batch_lot }})</small></td>
+                                <td class="small text-muted">{{ insp.machine }}</td>
+                                <td class="small">{{ insp.inspector.full_name }}</td>
+                                <td>
+                                    {% if insp.overall_result == 'OK' %}
+                                    <span class="badge badge-green"><i class="bi bi-check-circle me-1"></i> OK</span>
+                                    {% elif insp.overall_result == 'NG' %}
+                                    <span class="badge badge-red"><i class="bi bi-x-circle me-1"></i> NG</span>
+                                    {% else %}
+                                    <span class="badge badge-yellow">Pending</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="6" class="text-center text-muted py-3">No inspections logged for this process.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

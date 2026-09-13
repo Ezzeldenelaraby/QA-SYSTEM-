@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold text-dark mb-1">{{ title }}</h1>
+        <p class="text-muted small mb-0">ISO 9001:2015 Clause 7.5 Documented Information Creation & Update.</p>
+    </div>
+    <a href="{% url 'documents:list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to Documents
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-4">
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% if form.errors %}
+            <div class="alert alert-danger small py-2">
+                Please correct the errors indicated below.
+            </div>
+            {% endif %}
+
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Document Number *</label>
+                    {{ form.document_number }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Title *</label>
+                    {{ form.title }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Document Type *</label>
+                    {{ form.document_type }}
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Department *</label>
+                    {{ form.department }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Related Process</label>
+                    {{ form.process }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold">Revision No. *</label>
+                    {{ form.revision_number }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Effective Date</label>
+                    {{ form.effective_date }}
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Document Owner *</label>
+                    {{ form.owner }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Prepared By *</label>
+                    {{ form.prepared_by }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Designated Reviewer</label>
+                    {{ form.reviewed_by }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Issue Date</label>
+                    {{ form.issue_date }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Periodic Review Date</label>
+                    {{ form.review_date }}
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label small fw-semibold">Revision Rationale / Change Summary</label>
+                    {{ form.revision_reason }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">File Attachment (PDF, DOCX, XLSX, Drawing)</label>
+                    {{ form.file_attachment }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Internal Notes</label>
+                    {{ form.notes }}
+                </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                <a href="{% url 'documents:list' %}" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary px-4 shadow-sm">Save Document</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

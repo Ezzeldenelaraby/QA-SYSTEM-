@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}QMS Hub{% endblock %} | Quality Assurance & Management System</title>
+    <!-- Bootstrap 5.3 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/custom.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="d-flex" id="wrapper">
+        <!-- Sidebar Navigation -->
+        {% if user.is_authenticated %}
+        <div id="sidebar-wrapper">
+            <div class="sidebar-heading">
+                <div class="sidebar-brand-icon">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <div class="d-flex flex-column">
+                    <span class="fs-6 fw-bold text-white lh-1">QMS Hub</span>
+                    <small class="text-secondary" style="font-size: 0.68rem;">Industrial QA/QMS</small>
+                </div>
+            </div>
+
+            <div class="py-2">
+                <!-- Dashboard -->
+                <a href="{% url 'dashboard:index' %}" class="sidebar-link {% if request.resolver_match.app_name == 'dashboard' %}active{% endif %}">
+                    <i class="bi bi-grid-1x2-fill"></i> Dashboard
+                </a>
+
+                <!-- QMS Core -->
+                <div class="sidebar-section-title">QMS Core</div>
+                <a href="{% url 'processes:list' %}" class="sidebar-link {% if request.resolver_match.app_name == 'processes' %}active{% endif %}">
+                    <i class="bi bi-diagram-3-fill"></i> Processes
+                </a>
+                <a href="{% url 'documents:list' %}" class="sidebar-link {% if request.resolver_match.app_name == 'documents' %}active{% endif %}">
+                    <i class="bi bi-file-earmark-text-fill"></i> Documents
+                </a>
+                <a href="{% url 'risks:list' %}" class="sidebar-link {% if request.resolver_match.app_name == 'risks' %}active{% endif %}">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Risks Register
+                </a>
+                <a href="{% url 'objectives:list' %}" class="sidebar-link {% if request.resolver_match.app_name == 'objectives' %}active{% endif %}">
+                    <i class="bi bi-bullseye"></i> Quality Objectives
+                </a>
+
+                <!-- Quality & Shop Floor -->
+                <div class="sidebar-section-title">Quality</div>
+                <a href="{% url 'ncr:list' %}" class="sidebar-link {% if request.resolver_match.app_name == 'ncr' %}active{% endif %}">
+                    <i class="bi bi-x-octagon-fill"></i> NCR (Nonconformity)
+                </a>
+                <a href="{% url 'capa:list' %}" class="sidebar-link {% if request.resolver_match.app_name == 'capa' %}active{% endif %}">
+                    <i class="bi bi-arrow-repeat"></i> CAPA
+                </a>
+                <a href="{% url 'inspections:list' %}" class="sidebar-link {% if request.resolver_match.app_name == 'inspections' %}active{% endif %}">
+                    <i class="bi bi-card-checklist"></i> Inspections
+                </a>
+
+                <!-- Compliance -->
+                <div class="sidebar-section-title">Compliance</div>
+                <a href="{% url 'audits:list' %}" class="sidebar-link {% if request.resolver_match.app_name == 'audits' %}active{% endif %}">
+                    <i class="bi bi-clipboard2-check-fill"></i> Internal Audits
+                </a>
+                <a href="{% url 'calibration:list' %}" class="sidebar-link {% if request.resolver_match.app_name == 'calibration' %}active{% endif %}">
+                    <i class="bi bi-tools"></i> Calibration
+                </a>
+                <a href="{% url 'training:list' %}" class="sidebar-link {% if request.resolver_match.app_name == 'training' %}active{% endif %}">
+                    <i class="bi bi-mortarboard-fill"></i> Training Matrix
+                </a>
+
+                <!-- Management -->
+                <div class="sidebar-section-title">Management</div>
+                <a href="{% url 'actions:list' %}" class="sidebar-link {% if request.resolver_match.app_name == 'actions' %}active{% endif %}">
+                    <i class="bi bi-check2-square"></i> Action Central
+                </a>
+                <a href="{% url 'management_review:list' %}" class="sidebar-link {% if request.resolver_match.app_name == 'management_review' %}active{% endif %}">
+                    <i class="bi bi-people-fill"></i> Management Review
+                </a>
+                <a href="{% url 'reports:index' %}" class="sidebar-link {% if request.resolver_match.app_name == 'reports' %}active{% endif %}">
+                    <i class="bi bi-bar-chart-line-fill"></i> Reports & Exports
+                </a>
+
+                <!-- Administration -->
+                <div class="sidebar-section-title">Administration</div>
+                <a href="{% url 'accounts:user_list' %}" class="sidebar-link {% if request.resolver_match.app_name == 'accounts' and request.resolver_match.url_name != 'login' %}active{% endif %}">
+                    <i class="bi bi-person-badge-fill"></i> Users & Roles
+                </a>
+                <a href="{% url 'departments:list' %}" class="sidebar-link {% if request.resolver_match.app_name == 'departments' %}active{% endif %}">
+                    <i class="bi bi-building"></i> Departments
+                </a>
+                <a href="{% url 'core:system_settings' %}" class="sidebar-link {% if request.resolver_match.url_name == 'system_settings' %}active{% endif %}">
+                    <i class="bi bi-gear-fill"></i> System Settings
+                </a>
+                <a href="{% url 'core:audit_trail' %}" class="sidebar-link {% if request.resolver_match.url_name == 'audit_trail' %}active{% endif %}">
+                    <i class="bi bi-clock-history"></i> Audit Trail
+                </a>
+                <a href="{% url 'api:docs' %}" class="sidebar-link {% if request.resolver_match.app_name == 'api' %}active{% endif %}">
+                    <i class="bi bi-cpu"></i> REST API & IoT
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Page Content Wrapper -->
+        <div id="page-content-wrapper" class="w-100 {% if not user.is_authenticated %}ms-0{% endif %}">
+            <!-- Top Navbar -->
+            {% if user.is_authenticated %}
+            <nav class="navbar top-navbar px-3">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-outline-secondary btn-sm border-0 d-lg-none" id="sidebarToggle" type="button">
+                        <i class="bi bi-list fs-5"></i>
+                    </button>
+                    <!-- Global Search Bar -->
+                    <form class="d-flex search-input-group" action="{% url 'core:global_search' %}" method="GET">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                            <input type="text" name="q" class="form-control border-start-0 ps-0" placeholder="Search NCR, CAPA, Action, Document, Process..." value="{{ request.GET.q }}">
+                        </div>
+                    </form>
+                </div>
+
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Notifications Dropdown -->
+                    <div class="dropdown">
+                        <a class="text-secondary position-relative fs-5 text-decoration-none" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-bell-fill"></i>
+                            {% if unread_notifications_count > 0 %}
+                            <span id="unreadNotifBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">
+                                {{ unread_notifications_count }}
+                            </span>
+                            {% endif %}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm p-2" style="width: 320px; max-height: 380px; overflow-y: auto;">
+                            <li class="d-flex justify-content-between align-items-center px-2 py-1 border-bottom">
+                                <span class="fw-bold text-dark small">Notifications</span>
+                                <a href="{% url 'notifications:list' %}" class="small text-decoration-none">View All</a>
+                            </li>
+                            {% for notif in recent_notifications %}
+                            <li class="py-2 px-2 border-bottom">
+                                <a href="{{ notif.link|default:'#' }}" onclick="markNotificationRead({{ notif.id }}, this)" class="text-decoration-none text-dark d-block {% if not notif.is_read %}fw-bold{% else %}text-muted{% endif %} small">
+                                    <div class="d-flex justify-content-between">
+                                        <span>{{ notif.title }}</span>
+                                        <small class="text-muted" style="font-size: 0.7rem;">{{ notif.created_at|timesince }} ago</small>
+                                    </div>
+                                    <div class="text-muted text-truncate" style="font-size: 0.75rem;">{{ notif.message }}</div>
+                                </a>
+                            </li>
+                            {% empty %}
+                            <li class="p-3 text-center text-muted small">No new notifications</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <!-- User Account Dropdown -->
+                    <div class="dropdown">
+                        <a class="d-flex align-items-center text-decoration-none dropdown-toggle text-dark" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2 fw-bold" style="width: 34px; height: 34px; font-size: 0.85rem;">
+                                {{ user.first_name|first|default:user.username|first|upper }}
+                            </div>
+                            <div class="d-none d-md-flex flex-column text-start">
+                                <span class="small fw-semibold lh-1">{{ user.full_name }}</span>
+                                <span class="text-muted" style="font-size: 0.72rem;">{{ user.get_role_display }}</span>
+                            </div>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                            <li class="px-3 py-2 border-bottom">
+                                <div class="fw-bold small">{{ user.full_name }}</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">{{ user.department.name|default:"General" }}</div>
+                            </li>
+                            <li><a class="dropdown-item py-2 small" href="{% url 'actions:my_actions' %}"><i class="bi bi-check2-circle me-2 text-primary"></i> My Actions</a></li>
+                            <li><a class="dropdown-item py-2 small" href="{% url 'accounts:profile' %}"><i class="bi bi-person-circle me-2 text-secondary"></i> My Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="POST" action="{% url 'accounts:logout' %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item py-2 small text-danger"><i class="bi bi-box-arrow-right me-2"></i> Sign Out</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+            {% endif %}
+
+            <!-- Main Content Container -->
+            <main class="container-fluid p-4 flex-grow-1">
+                <!-- Flash Messages -->
+                {% if messages %}
+                <div class="row">
+                    <div class="col-12">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show shadow-sm" role="alert">
+                            <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% block content %}{% endblock %}
+            </main>
+
+            <!-- Footer -->
+            <footer class="bg-white border-top py-3 px-4 text-muted small d-flex justify-content-between align-items-center mt-auto">
+                <div>
+                    <strong>{{ system_settings.company_name }}</strong> &mdash; Quality Assurance & Quality Management System (ISO 9001:2015 Compliant)
+                </div>
+                <div>
+                    <span>Production Build v2.6.0 &bull; QMS Hub</span>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5.3 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom App JS -->
+    <script src="/static/js/app.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

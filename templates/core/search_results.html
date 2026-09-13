@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% block title %}Search Results for "{{ results.query }}"{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold text-dark mb-1">Global Search Results</h1>
+        <p class="text-muted small mb-0">Found {{ results.total_count }} record(s) matching "<strong>{{ results.query }}</strong>"</p>
+    </div>
+</div>
+
+{% if results.total_count == 0 %}
+<div class="card p-5 text-center shadow-sm">
+    <div class="text-muted display-6 mb-3"><i class="bi bi-search"></i></div>
+    <h5 class="fw-bold">No results found</h5>
+    <p class="text-muted small">Try searching with a different keyword, code, document number, or lot number.</p>
+</div>
+{% else %}
+
+<div class="row g-4">
+    <!-- NCRs -->
+    {% if results.ncrs %}
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <span class="fw-bold text-danger"><i class="bi bi-x-octagon-fill me-2"></i> Nonconformity Reports ({{ results.ncrs|length }})</span>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for ncr in results.ncrs %}
+                <a href="{% url 'ncr:detail' ncr.id %}" class="list-group-item list-group-item-action py-3">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1 fw-bold text-primary">{{ ncr.ncr_number }} &bull; {{ ncr.product }}</h6>
+                        <span class="badge badge-yellow">{{ ncr.get_status_display }}</span>
+                    </div>
+                    <p class="mb-1 text-muted small text-truncate">{{ ncr.description }}</p>
+                    <small class="text-secondary">Lot: {{ ncr.batch_lot }} | Dept: {{ ncr.department.code }}</small>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- CAPAs -->
+    {% if results.capas %}
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <span class="fw-bold text-primary"><i class="bi bi-arrow-repeat me-2"></i> CAPAs ({{ results.capas|length }})</span>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for capa in results.capas %}
+                <a href="{% url 'capa:detail' capa.id %}" class="list-group-item list-group-item-action py-3">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1 fw-bold text-primary">{{ capa.capa_number }}</h6>
+                        <span class="badge badge-blue">{{ capa.get_status_display }}</span>
+                    </div>
+                    <p class="mb-1 fw-semibold small">{{ capa.title }}</p>
+                    <small class="text-muted">Lead: {{ capa.responsible_person.full_name }}</small>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Actions -->
+    {% if results.actions %}
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <span class="fw-bold text-success"><i class="bi bi-check2-square me-2"></i> Actions ({{ results.actions|length }})</span>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for action in results.actions %}
+                <a href="{% url 'actions:detail' action.id %}" class="list-group-item list-group-item-action py-3">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1 fw-bold text-primary">{{ action.action_number }} &bull; {{ action.title }}</h6>
+                        <span class="badge {% if action.status == 'OVERDUE' %}badge-red{% else %}badge-blue{% endif %}">{{ action.get_status_display }}</span>
+                    </div>
+                    <p class="mb-1 text-muted small text-truncate">{{ action.description }}</p>
+                    <small class="text-secondary">Assigned: {{ action.assigned_to.full_name }} | Due: {{ action.due_date }}</small>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Documents -->
+    {% if results.documents %}
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <span class="fw-bold text-info"><i class="bi bi-file-earmark-text-fill me-2"></i> Documents ({{ results.documents|length }})</span>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for doc in results.documents %}
+                <a href="{% url 'documents:detail' doc.id %}" class="list-group-item list-group-item-action py-3">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1 fw-bold text-primary">{{ doc.document_number }} &bull; {{ doc.title }}</h6>
+                        <span class="badge badge-green">{{ doc.get_status_display }}</span>
+                    </div>
+                    <small class="text-muted">Rev {{ doc.revision_number }} | Type: {{ doc.get_document_type_display }}</small>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Equipment -->
+    {% if results.equipment %}
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <span class="fw-bold text-warning"><i class="bi bi-tools me-2"></i> Calibration Equipment ({{ results.equipment|length }})</span>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for eq in results.equipment %}
+                <a href="{% url 'calibration:detail' eq.id %}" class="list-group-item list-group-item-action py-3">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1 fw-bold text-primary">{{ eq.equipment_id }} &bull; {{ eq.equipment_name }}</h6>
+                        <span class="badge {% if eq.status == 'EXPIRED' %}badge-red{% else %}badge-green{% endif %}">{{ eq.get_status_display }}</span>
+                    </div>
+                    <small class="text-muted">SN: {{ eq.serial_number }} | Next Due: {{ eq.next_calibration_date }}</small>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Processes -->
+    {% if results.processes %}
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <span class="fw-bold text-dark"><i class="bi bi-diagram-3-fill me-2"></i> Processes ({{ results.processes|length }})</span>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for proc in results.processes %}
+                <a href="{% url 'processes:detail' proc.id %}" class="list-group-item list-group-item-action py-3">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1 fw-bold text-primary">{{ proc.code }} &bull; {{ proc.name }}</h6>
+                        <span class="badge badge-green">{{ proc.get_status_display }}</span>
+                    </div>
+                    <small class="text-muted">Owner: {{ proc.process_owner.full_name }} | Dept: {{ proc.department.name }}</small>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ meeting.meeting_number }} - Management Review{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <h2 class="h3 fw-bold text-navy mb-0">{{ meeting.meeting_number }}</h2>
+            {% if meeting.status == 'MINUTES_APPROVED' %}
+            <span class="badge badge-green"><i class="bi bi-check2-all me-1"></i>Minutes Approved</span>
+            {% elif meeting.status == 'COMPLETED' %}
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Completed</span>
+            {% elif meeting.status == 'MINUTES_DRAFT' %}
+            <span class="badge badge-yellow">Minutes Draft</span>
+            {% else %}
+            <span class="badge bg-light text-secondary border">Scheduled</span>
+            {% endif %}
+        </div>
+        <h5 class="text-secondary fw-normal mb-0">{{ meeting.title }}</h5>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'management_review:list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+        <a href="{% url 'actions:create' %}?source_type=MANAGEMENT_REVIEW&source_id={{ meeting.id }}" class="btn btn-warning text-dark fw-semibold">
+            <i class="bi bi-plus-circle me-1"></i> Assign Action Item
+        </a>
+        <a href="{% url 'management_review:edit' meeting.pk %}" class="btn btn-light border">
+            <i class="bi bi-pencil me-1"></i> Edit Review
+        </a>
+        {% if meeting.status != 'MINUTES_APPROVED' %}
+        <form method="post" action="{% url 'management_review:approve_minutes' meeting.pk %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success" onclick="return confirm('Confirm sign-off and approval of these Management Review Minutes?')">
+                <i class="bi bi-check-circle me-1"></i> Approve Minutes
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Meeting Meta Info -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-3 p-3">
+            <span class="text-muted small">Meeting Date</span>
+            <span class="fw-bold text-dark"><i class="bi bi-calendar-event me-1 text-primary"></i>{{ meeting.meeting_date|date:"F d, Y" }}</span>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-3 p-3">
+            <span class="text-muted small">Chairperson</span>
+            <span class="fw-bold text-dark"><i class="bi bi-person-badge me-1 text-primary"></i>{{ meeting.chairperson.full_name }}</span>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-3 p-3">
+            <span class="text-muted small">Attendees / Participants</span>
+            <span class="text-dark small">{{ meeting.participants|linebreaksbr }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- General Summary -->
+{% if meeting.general_summary %}
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white border-bottom py-3">
+        <h6 class="fw-bold text-navy mb-0"><i class="bi bi-card-text me-2 text-primary"></i>Executive Overview & Opening Remarks</h6>
+    </div>
+    <div class="card-body">
+        <p class="mb-0 text-secondary">{{ meeting.general_summary|linebreaksbr }}</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Tabs for ISO 9001 Clause 9.3 Compliance -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-bottom p-0">
+        <ul class="nav nav-tabs card-header-tabs m-0" id="mrmTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active px-4 py-3 fw-semibold" id="inputs-tab" data-bs-toggle="tab" data-bs-target="#inputs-pane" type="button" role="tab">
+                    <i class="bi bi-box-arrow-in-right me-1 text-primary"></i> Clause 9.3.2 Inputs
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link px-4 py-3 fw-semibold" id="outputs-tab" data-bs-toggle="tab" data-bs-target="#outputs-pane" type="button" role="tab">
+                    <i class="bi bi-box-arrow-right me-1 text-success"></i> Clause 9.3.3 Outputs
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link px-4 py-3 fw-semibold" id="actions-tab" data-bs-toggle="tab" data-bs-target="#actions-pane" type="button" role="tab">
+                    <i class="bi bi-check2-square me-1 text-warning"></i> Action Items ({{ actions.count }})
+                </button>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body p-4">
+        <div class="tab-content" id="mrmTabsContent">
+            <!-- Pane 1: Clause 9.3.2 Inputs -->
+            <div class="tab-pane fade show active" id="inputs-pane" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 bg-light h-100">
+                            <h6 class="fw-bold text-navy mb-2"><i class="bi bi-arrow-clockwise me-1 text-primary"></i> a) Status of Actions from Previous Reviews</h6>
+                            <div class="text-secondary small">{{ meeting.inputs_previous_actions|default:"No prior actions reviewed."|linebreaksbr }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 bg-light h-100">
+                            <h6 class="fw-bold text-navy mb-2"><i class="bi bi-clipboard-check me-1 text-primary"></i> b) Audit Results & Findings</h6>
+                            <div class="text-secondary small">{{ meeting.inputs_audit_results|default:"No audit items noted."|linebreaksbr }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 bg-light h-100">
+                            <h6 class="fw-bold text-navy mb-2"><i class="bi bi-chat-square-heart me-1 text-primary"></i> c.1) Customer Satisfaction & Feedback</h6>
+                            <div class="text-secondary small">{{ meeting.inputs_customer_feedback|default:"No customer feedback data recorded."|linebreaksbr }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 bg-light h-100">
+                            <h6 class="fw-bold text-navy mb-2"><i class="bi bi-gear-wide-connected me-1 text-primary"></i> c.2) Process Performance & Product Conformity</h6>
+                            <div class="text-secondary small">{{ meeting.inputs_process_performance|default:"No process performance metrics recorded."|linebreaksbr }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 bg-light h-100">
+                            <h6 class="fw-bold text-navy mb-2"><i class="bi bi-bullseye me-1 text-primary"></i> c.3) Extent to which Quality Objectives Met</h6>
+                            <div class="text-secondary small">{{ meeting.inputs_quality_objectives|default:"No objectives reviewed."|linebreaksbr }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 bg-light h-100">
+                            <h6 class="fw-bold text-navy mb-2"><i class="bi bi-exclamation-octagon me-1 text-primary"></i> c.4) Nonconformities & Corrective Actions</h6>
+                            <div class="text-secondary small">{{ meeting.inputs_ncr_capa_status|default:"No NCR/CAPA status reported."|linebreaksbr }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 bg-light h-100">
+                            <h6 class="fw-bold text-navy mb-2"><i class="bi bi-truck me-1 text-primary"></i> c.5) Supplier & External Provider Performance</h6>
+                            <div class="text-secondary small">{{ meeting.inputs_supplier_performance|default:"No supplier evaluation data recorded."|linebreaksbr }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 bg-light h-100">
+                            <h6 class="fw-bold text-navy mb-2"><i class="bi bi-shield-exclamation me-1 text-primary"></i> d) Risks & Opportunities Actions Effectiveness</h6>
+                            <div class="text-secondary small">{{ meeting.inputs_risks_opportunities|default:"No risk mitigation review recorded."|linebreaksbr }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 bg-light h-100">
+                            <h6 class="fw-bold text-navy mb-2"><i class="bi bi-cash-stack me-1 text-primary"></i> e) Adequacy of Resources</h6>
+                            <div class="text-secondary small">{{ meeting.inputs_resource_needs|default:"No resource requirements reported."|linebreaksbr }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 bg-light h-100">
+                            <h6 class="fw-bold text-navy mb-2"><i class="bi bi-lightning-charge me-1 text-primary"></i> f) Opportunities for Continual Improvement</h6>
+                            <div class="text-secondary small">{{ meeting.inputs_improvement_opportunities|default:"No improvement proposals noted."|linebreaksbr }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pane 2: Clause 9.3.3 Outputs -->
+            <div class="tab-pane fade" id="outputs-pane" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-12">
+                        <div class="border rounded p-3 bg-white shadow-sm border-start border-4 border-success">
+                            <h6 class="fw-bold text-success mb-2"><i class="bi bi-check-all me-1"></i> a) Decisions Related to Continual Improvement</h6>
+                            <div class="text-secondary">{{ meeting.outputs_decisions|default:"No formal improvement decisions recorded."|linebreaksbr }}</div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="border rounded p-3 bg-white shadow-sm border-start border-4 border-primary">
+                            <h6 class="fw-bold text-primary mb-2"><i class="bi bi-wallet2 me-1"></i> b) QMS Changes & Organizational Resource Decisions</h6>
+                            <div class="text-secondary">{{ meeting.outputs_resource_requirements|default:"No budget or resource changes approved."|linebreaksbr }}</div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="border rounded p-3 bg-white shadow-sm border-start border-4 border-info">
+                            <h6 class="fw-bold text-navy mb-2"><i class="bi bi-kanban me-1"></i> c) Improvement Projects & Strategic Initiatives</h6>
+                            <div class="text-secondary">{{ meeting.outputs_improvement_projects|default:"No specific improvement projects initiated."|linebreaksbr }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pane 3: Action Items -->
+            <div class="tab-pane fade" id="actions-pane" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold text-navy mb-0">Decided Management Review Action Items</h6>
+                    <a href="{% url 'actions:create' %}?source_type=MANAGEMENT_REVIEW&source_id={{ meeting.id }}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-plus me-1"></i> New Action Item
+                    </a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Action #</th>
+                                <th>Title</th>
+                                <th>Assignee</th>
+                                <th>Department</th>
+                                <th>Due Date</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for act in actions %}
+                            <tr>
+                                <td class="fw-bold"><a href="{% url 'actions:detail' act.pk %}">{{ act.action_number }}</a></td>
+                                <td>{{ act.title }}</td>
+                                <td>{{ act.assigned_to.full_name|default:"Unassigned" }}</td>
+                                <td>{{ act.department.name|default:"--" }}</td>
+                                <td>
+                                    <span class="{% if act.is_overdue %}text-danger fw-bold{% endif %}">
+                                        {{ act.due_date|date:"M d, Y" }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if act.priority == 'CRITICAL' %}
+                                    <span class="badge badge-red">Critical</span>
+                                    {% elif act.priority == 'HIGH' %}
+                                    <span class="badge badge-yellow">High</span>
+                                    {% else %}
+                                    <span class="badge bg-light text-dark border">{{ act.get_priority_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if act.status == 'COMPLETED' or act.status == 'VERIFIED' %}
+                                    <span class="badge badge-green">{{ act.get_status_display }}</span>
+                                    {% elif act.status == 'OVERDUE' %}
+                                    <span class="badge badge-red">Overdue</span>
+                                    {% else %}
+                                    <span class="badge badge-blue">{{ act.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-muted">
+                                    No action items assigned from this meeting yet.
+                                    <div class="mt-2">
+                                        <a href="{% url 'actions:create' %}?source_type=MANAGEMENT_REVIEW&source_id={{ meeting.id }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-plus-circle me-1"></i> Create First Action
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

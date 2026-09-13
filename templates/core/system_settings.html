@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}System Settings{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold text-dark mb-1">System Configuration & Master Settings</h1>
+        <p class="text-muted small mb-0">Configure company metadata, numbering prefixes, risk thresholds, and calibration alert rules.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <span class="fw-bold text-primary"><i class="bi bi-gear-fill me-2"></i> Organization & Quality Parameters</span>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Company / Plant Name</label>
+                        <input type="text" name="company_name" class="form-control" value="{{ settings_obj.company_name }}" required>
+                        <div class="form-text">Displayed on official reports, document footers, and top branding.</div>
+                    </div>
+
+                    <h6 class="fw-bold text-dark border-bottom pb-2 mb-3 mt-4">Document & Record Numbering Prefixes</h6>
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold small">NCR Prefix</label>
+                            <input type="text" name="ncr_prefix" class="form-control" value="{{ settings_obj.ncr_prefix }}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold small">CAPA Prefix</label>
+                            <input type="text" name="capa_prefix" class="form-control" value="{{ settings_obj.capa_prefix }}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold small">Action Prefix</label>
+                            <input type="text" name="action_prefix" class="form-control" value="{{ settings_obj.action_prefix }}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold small">Audit Prefix</label>
+                            <input type="text" name="audit_prefix" class="form-control" value="{{ settings_obj.audit_prefix }}" required>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold text-dark border-bottom pb-2 mb-3 mt-4">Alert Thresholds & Risk Matrix Rules</h6>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Calibration Alert (Days Before)</label>
+                            <input type="number" name="calibration_alert_days" class="form-control" value="{{ settings_obj.calibration_alert_days }}" required>
+                            <div class="form-text">Triggers "Due Soon" badge and dashboard warnings.</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Risk "High" Threshold (Score &ge;)</label>
+                            <input type="number" name="risk_high_threshold" class="form-control" value="{{ settings_obj.risk_high_threshold }}" required>
+                            <div class="form-text">Standard ISO/FMEA score is 10.</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Risk "Critical" Threshold (Score &ge;)</label>
+                            <input type="number" name="risk_critical_threshold" class="form-control" value="{{ settings_obj.risk_critical_threshold }}" required>
+                            <div class="form-text">Standard ISO/FMEA score is 15.</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary px-4 shadow-sm">
+                            <i class="bi bi-check2-circle me-1"></i> Save Configuration
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm bg-light border-0">
+            <div class="card-body p-4">
+                <h6 class="fw-bold text-dark"><i class="bi bi-info-circle me-2 text-primary"></i> QMS Standard Alignment</h6>
+                <p class="small text-muted mb-3">
+                    Configuring standardized prefixes and strict risk thresholds guarantees consistency with <strong>ISO 9001:2015</strong> (Clause 6.1 Risk-based thinking and Clause 7.1.5 Measurement Traceability).
+                </p>
+                <div class="p-3 bg-white rounded border mb-3">
+                    <div class="fw-semibold small text-dark mb-1">Active Environment:</div>
+                    <span class="badge badge-green">Production Ready</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

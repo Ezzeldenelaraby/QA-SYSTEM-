@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}Training Records - QMS Hub{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h3 fw-bold text-navy mb-1">Employee Training Records</h2>
+        <p class="text-muted small mb-0">Historical log of qualifications, certifications, and assessments</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'training:matrix' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-grid-3x3 me-1"></i> Competency Matrix
+        </a>
+        <a href="{% url 'training:record_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i> Log Training Record
+        </a>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">Employee</th>
+                        <th>Course</th>
+                        <th>Trainer / Institution</th>
+                        <th>Training Date</th>
+                        <th>Expiry Date</th>
+                        <th>Assessment Result</th>
+                        <th>Competency Status</th>
+                        <th>Evidence</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in records %}
+                    <tr>
+                        <td class="ps-3 fw-bold">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle bg-light border text-primary fw-bold d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                                    {{ r.employee.first_name|first|default:r.employee.username|first|upper }}
+                                </div>
+                                <div>
+                                    <span>{{ r.employee.full_name }}</span>
+                                    <div class="text-muted small">{{ r.employee.department.name|default:"--" }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="fw-semibold text-primary">{{ r.course.code }}</div>
+                            <div class="small text-muted">{{ r.course.title }}</div>
+                        </td>
+                        <td>{{ r.trainer }}</td>
+                        <td>{{ r.training_date|date:"M d, Y" }}</td>
+                        <td>
+                            {% if r.expiry_date %}
+                                {% if r.is_expired %}
+                                <span class="badge badge-red" title="Expired">
+                                    <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ r.expiry_date|date:"M d, Y" }}
+                                </span>
+                                {% else %}
+                                <span class="text-secondary small">{{ r.expiry_date|date:"M d, Y" }}</span>
+                                {% endif %}
+                            {% else %}
+                            <span class="text-muted small">No Expiry</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if r.result == 'PASS' %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-check-circle me-1"></i>Passed</span>
+                            {% elif r.result == 'FAIL' %}
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="bi bi-x-circle me-1"></i>Failed</span>
+                            {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary border">Attended</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if r.competency_status == 'COMPETENT' %}
+                            <span class="badge badge-green"><i class="bi bi-award me-1"></i>Competent</span>
+                            {% elif r.competency_status == 'NEEDS_IMPROVEMENT' %}
+                            <span class="badge badge-yellow">Needs Improvement</span>
+                            {% else %}
+                            <span class="badge bg-light text-muted border">Not Evaluated</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if r.certificate_file %}
+                            <a href="{{ r.certificate_file.url }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="View Certificate">
+                                <i class="bi bi-paperclip"></i> Certificate
+                            </a>
+                            {% else %}
+                            <span class="text-muted small">None</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-muted">No training records logged yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

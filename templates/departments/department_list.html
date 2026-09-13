@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Departments Directory{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold text-dark mb-1">Departments Master Data</h1>
+        <p class="text-muted small mb-0">Industrial plant operational and management departments.</p>
+    </div>
+    {% if user.is_super_admin or user.is_qa_manager %}
+    <a href="{% url 'departments:create' %}" class="btn btn-primary btn-sm px-3 shadow-sm">
+        <i class="bi bi-plus-lg me-1"></i> Add Department
+    </a>
+    {% endif %}
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Department Name</th>
+                    <th>Head / Manager</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in departments %}
+                <tr>
+                    <td class="fw-bold text-primary">{{ d.code }}</td>
+                    <td class="fw-semibold text-dark">{{ d.name }}</td>
+                    <td class="small">{{ d.manager.full_name|default:"Unassigned" }}</td>
+                    <td class="small text-muted text-truncate" style="max-width: 300px;">{{ d.description|default:"-" }}</td>
+                    <td>
+                        {% if d.active %}
+                        <span class="badge badge-green">Active</span>
+                        {% else %}
+                        <span class="badge badge-gray">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        {% if user.is_super_admin or user.is_qa_manager %}
+                        <a href="{% url 'departments:edit' d.id %}" class="btn btn-outline-secondary btn-sm" title="Edit">
+                            <i class="bi bi-pencil-square"></i>
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

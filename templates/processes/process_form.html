@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold text-dark mb-1">{{ title }}</h1>
+        <p class="text-muted small mb-0">Define process boundaries, parameters, quality gates, and process owner.</p>
+    </div>
+    <a href="{% url 'processes:list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to Processes
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-4">
+        <form method="POST">
+            {% csrf_token %}
+            {% if form.errors %}
+            <div class="alert alert-danger small py-2">
+                Please correct the errors in the form.
+            </div>
+            {% endif %}
+
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold">Process Code *</label>
+                    {{ form.code }}
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label small fw-semibold">Process Name *</label>
+                    {{ form.name }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold">Department *</label>
+                    {{ form.department }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold">Process Owner</label>
+                    {{ form.process_owner }}
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label small fw-semibold">Process Description & Scope *</label>
+                    {{ form.description }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Process Inputs</label>
+                    {{ form.inputs }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Process Outputs</label>
+                    {{ form.outputs }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Major Equipment & Machines</label>
+                    {{ form.equipment }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Tooling, Dies & Fixtures</label>
+                    {{ form.tools }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Critical Process Parameters</label>
+                    {{ form.parameters }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Inspection Points & Checkpoints</label>
+                    {{ form.inspection_points }}
+                </div>
+
+                <div class="col-md-8">
+                    <label class="form-label small fw-semibold">Mandatory Quality Gates</label>
+                    {{ form.quality_gates }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Process Status</label>
+                    {{ form.status }}
+                </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                <a href="{% url 'processes:list' %}" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary px-4 shadow-sm">Save Process</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

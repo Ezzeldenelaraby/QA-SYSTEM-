@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+{% block title %}{{ objective.code }}: {{ objective.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge badge-blue fs-6">{{ objective.code }}</span>
+            <span class="badge {% if objective.status == 'ACHIEVED' or objective.status == 'ON_TRACK' %}badge-green{% elif objective.status == 'AT_RISK' %}badge-yellow{% else %}badge-red{% endif %} fs-6">
+                {{ objective.get_status_display }}
+            </span>
+        </div>
+        <h1 class="h3 fw-bold text-dark mb-0">{{ objective.name }}</h1>
+        <p class="text-muted small mb-0">{{ objective.department.name }} {% if objective.process %}&bull; Process: {{ objective.process.name }}{% endif %}</p>
+    </div>
+
+    <div class="d-flex gap-2">
+        <a href="{% url 'objectives:list' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+        <button type="button" class="btn btn-success btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#recordMetricModal">
+            <i class="bi bi-plus-circle me-1"></i> Log Monthly Measurement
+        </button>
+        <a href="{% url 'objectives:edit' objective.id %}" class="btn btn-primary btn-sm px-3 shadow-sm">
+            <i class="bi bi-pencil me-1"></i> Edit Objective
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Trend Chart Card -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <span class="fw-bold text-dark"><i class="bi bi-graph-up-arrow me-2 text-primary"></i> Historical Performance Trend</span>
+            </div>
+            <div class="card-body p-4">
+                <canvas id="objectiveTrendChart" height="110"></canvas>
+            </div>
+        </div>
+
+        <!-- Monthly Measurement Log Table -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <span class="fw-bold text-dark"><i class="bi bi-calendar3 me-2"></i> Monthly Measurements History</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Period Date</th>
+                            <th>Recorded Value</th>
+                            <th>Context Notes</th>
+                            <th>Recorded By</th>
+                            <th>Logged On</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for m in measurements %}
+                        <tr>
+                            <td class="fw-bold text-dark">{{ m.period_date }}</td>
+                            <td class="fw-bold text-primary">{{ m.value }} {{ objective.unit }}</td>
+                            <td class="small text-muted">{{ m.notes|default:"-" }}</td>
+                            <td class="small">{{ m.recorded_by.full_name|default:"Automated" }}</td>
+                            <td class="small text-muted">{{ m.created_at|date:"Y-m-d" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-3">No monthly measurements recorded yet. Click "Log Monthly Measurement" above.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: KPI Metrics & Definition -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <span class="fw-bold text-dark"><i class="bi bi-bullseye me-2"></i> Target Specification</span>
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-3">
+                    <small class="text-muted d-block">Key Performance Indicator (KPI)</small>
+                    <span class="fw-bold text-dark fs-6">{{ objective.kpi }}</span>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted d-block">Measurement Formula / Method</small>
+                    <span class="small text-muted">{{ objective.measurement_method }}</span>
+                </div>
+                <hr>
+                <div class="row text-center mb-3">
+                    <div class="col-6 border-end">
+                        <small class="text-muted d-block">Baseline</small>
+                        <span class="fw-bold text-secondary fs-5">{{ objective.baseline }} {{ objective.unit }}</span>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted d-block">Target</small>
+                        <span class="fw-bold text-primary fs-5">{{ objective.target }} {{ objective.unit }}</span>
+                    </div>
+                </div>
+                <div class="p-3 bg-light rounded text-center border">
+                    <small class="text-muted d-block">Current Actual Value</small>
+                    <span class="display-6 fw-bold text-success">{{ objective.actual_result|default:"-" }}</span>
+                    <small class="text-muted">{{ objective.unit }}</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <span class="fw-bold text-dark"><i class="bi bi-person-badge me-2"></i> Governance</span>
+            </div>
+            <div class="card-body p-4 small">
+                <div class="mb-2"><strong>Responsible Owner:</strong> {{ objective.responsible_person.full_name }}</div>
+                <div class="mb-2"><strong>Start Date:</strong> {{ objective.start_date }}</div>
+                <div class="mb-2"><strong>Target Due Date:</strong> {{ objective.due_date }}</div>
+                <div class="mb-0"><strong>Achievement Progress:</strong> {{ objective.achievement_percentage }}%</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Log Monthly Metric -->
+<div class="modal fade" id="recordMetricModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{% url 'objectives:add_measurement' objective.id %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Log Monthly Measurement for {{ objective.code }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Measurement Period Date *</label>
+                        {{ measurement_form.period_date }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Measured Value ({{ objective.unit }}) *</label>
+                        {{ measurement_form.value }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Context Notes</label>
+                        {{ measurement_form.notes }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Save Measurement</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('objectiveTrendChart');
+    if (ctx) {
+        const labels = {{ chart_labels_json|safe }};
+        const actuals = {{ chart_values_json|safe }};
+        const targets = {{ target_values_json|safe }};
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Actual Result ({{ objective.unit }})',
+                        data: actuals,
+                        borderColor: '#0284c7',
+                        backgroundColor: 'rgba(2, 132, 199, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        borderWidth: 3,
+                        pointRadius: 5
+                    },
+                    {
+                        label: 'Target ({{ objective.target }} {{ objective.unit }})',
+                        data: targets,
+                        borderColor: '#10b981',
+                        borderDash: [6, 6],
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'top' }
+                },
+                scales: {
+                    y: { beginAtZero: false }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

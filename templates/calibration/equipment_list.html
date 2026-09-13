@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block title %}Calibration & Measurement Equipment{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold text-dark mb-1">Equipment Calibration & Metrology</h1>
+        <p class="text-muted small mb-0">ISO 9001:2015 Clause 7.1.5 Monitoring and Measuring Resources.</p>
+    </div>
+    <a href="{% url 'calibration:create' %}" class="btn btn-primary btn-sm px-3 shadow-sm">
+        <i class="bi bi-plus-lg me-1"></i> Register Instrument
+    </a>
+</div>
+
+<!-- Metrology Alert Banners -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card metric-card border-red shadow-sm p-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <small class="text-muted fw-bold">Expired Calibration Instruments</small>
+                    <div class="h3 fw-bold text-danger mb-0 mt-1">{{ expired_count }}</div>
+                </div>
+                <i class="bi bi-exclamation-octagon-fill display-6 text-danger opacity-50"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card metric-card border-yellow shadow-sm p-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <small class="text-muted fw-bold">Instruments Due Soon (&lt; 30 Days)</small>
+                    <div class="h3 fw-bold text-warning mb-0 mt-1">{{ due_soon_count }}</div>
+                </div>
+                <i class="bi bi-clock-history display-6 text-warning opacity-50"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body p-3">
+        <form method="GET" class="row g-3 align-items-center">
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Category</label>
+                <select name="category" class="form-select form-select-sm">
+                    <option value="">-- All Categories --</option>
+                    <option value="MICROMETER" {% if selected_category == 'MICROMETER' %}selected{% endif %}>Micrometer</option>
+                    <option value="CALIPER" {% if selected_category == 'CALIPER' %}selected{% endif %}>Caliper</option>
+                    <option value="PRESSURE_GAUGE" {% if selected_category == 'PRESSURE_GAUGE' %}selected{% endif %}>Pressure Gauge</option>
+                    <option value="SCALE" {% if selected_category == 'SCALE' %}selected{% endif %}>Scale</option>
+                    <option value="TORQUE_WRENCH" {% if selected_category == 'TORQUE_WRENCH' %}selected{% endif %}>Torque Wrench</option>
+                    <option value="CMM" {% if selected_category == 'CMM' %}selected{% endif %}>CMM Probe</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Calibration Status</label>
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">-- All Statuses --</option>
+                    <option value="VALID" {% if selected_status == 'VALID' %}selected{% endif %}>Valid (In Tolerance)</option>
+                    <option value="DUE_SOON" {% if selected_status == 'DUE_SOON' %}selected{% endif %}>Due Soon</option>
+                    <option value="EXPIRED" {% if selected_status == 'EXPIRED' %}selected{% endif %}>Expired</option>
+                    <option value="OUT_OF_SERVICE" {% if selected_status == 'OUT_OF_SERVICE' %}selected{% endif %}>Out of Service</option>
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary btn-sm px-3"><i class="bi bi-funnel me-1"></i> Filter</button>
+                <a href="{% url 'calibration:list' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-circle me-1"></i> Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Equipment ID</th>
+                    <th>Equipment Name</th>
+                    <th>Category</th>
+                    <th>Department / Location</th>
+                    <th>Range & Accuracy</th>
+                    <th>Last Cal Date</th>
+                    <th>Next Cal Date</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for eq in equipment %}
+                <tr class="{% if eq.status == 'EXPIRED' %}table-danger-subtle{% elif eq.status == 'DUE_SOON' %}table-warning-subtle{% endif %}">
+                    <td class="fw-bold"><a href="{% url 'calibration:detail' eq.id %}" class="text-primary text-decoration-none">{{ eq.equipment_id }}</a></td>
+                    <td class="fw-semibold text-dark">{{ eq.equipment_name }}</td>
+                    <td><span class="badge badge-gray">{{ eq.get_category_display }}</span></td>
+                    <td class="small">
+                        {{ eq.department.code }}<br>
+                        <span class="text-muted">{{ eq.location }}</span>
+                    </td>
+                    <td class="small text-muted font-monospace">{{ eq.measurement_range }} &bull; {{ eq.accuracy }}</td>
+                    <td class="small text-muted">{{ eq.last_calibration_date }}</td>
+                    <td class="small fw-bold {% if eq.status == 'EXPIRED' %}text-danger{% elif eq.status == 'DUE_SOON' %}text-warning{% else %}text-success{% endif %}">
+                        {{ eq.next_calibration_date }}
+                        {% if eq.status == 'EXPIRED' %}
+                        <small class="d-block text-danger">({{ eq.days_until_due|stringformat:"+d" }} days)</small>
+                        {% elif eq.status == 'DUE_SOON' %}
+                        <small class="d-block text-warning">({{ eq.days_until_due }} days left)</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge {% if eq.status == 'VALID' %}badge-green{% elif eq.status == 'DUE_SOON' %}badge-yellow{% elif eq.status == 'EXPIRED' %}badge-red{% else %}badge-gray{% endif %}">
+                            {{ eq.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="text-end">
+                        <a href="{% url 'calibration:detail' eq.id %}" class="btn btn-outline-primary btn-sm" title="View Certificate & History">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="text-center text-muted py-4">No equipment found matching your criteria.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

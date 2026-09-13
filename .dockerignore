@@ -1,0 +1,14 @@
+.git
+.gitignore
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+db.sqlite3
+.env
+.env.local
+.system_generated
+node_modules
+*.log
+scripts/test_*.py

@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold text-dark mb-1">{{ title }}</h1>
+        <p class="text-muted small mb-0">ISO 9001:2015 Clause 10.2 Corrective and Preventive Action Planning.</p>
+    </div>
+    <a href="{% url 'capa:list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to CAPA List
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-4">
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% if form.errors %}
+            <div class="alert alert-danger small py-2">Please correct the indicated fields.</div>
+            {% endif %}
+
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label small fw-semibold">CAPA Project Title *</label>
+                    {{ form.title }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Originating Source *</label>
+                    {{ form.source }}
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Related Nonconformity (NCR)</label>
+                    {{ form.related_ncr }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Related Internal Audit Finding</label>
+                    {{ form.related_finding }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Related Process Risk</label>
+                    {{ form.related_risk }}
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label small fw-semibold">Problem Statement & Background *</label>
+                    {{ form.description }}
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label small fw-semibold">Underlying Systemic Root Cause *</label>
+                    {{ form.root_cause }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Corrective Action (Immediate Cause Fix) *</label>
+                    {{ form.corrective_action }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Preventive Action (Systemic Recurrence Elimination) *</label>
+                    {{ form.preventive_action }}
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Responsible Project Lead *</label>
+                    {{ form.responsible_person }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Start Date *</label>
+                    {{ form.start_date }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Target Due Date *</label>
+                    {{ form.due_date }}
+                </div>
+
+                <div class="col-md-8">
+                    <label class="form-label small fw-semibold">Effectiveness Verification Method & Criteria *</label>
+                    {{ form.verification_method }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Current Project Status</label>
+                    {{ form.status }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Supporting Evidence Description</label>
+                    {{ form.evidence }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Upload Supporting Validation Attachment</label>
+                    {{ form.evidence_file }}
+                </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                <a href="{% url 'capa:list' %}" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary px-4 shadow-sm">Save CAPA Project</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

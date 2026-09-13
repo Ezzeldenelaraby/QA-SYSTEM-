@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+{% block title %}{{ doc.document_number }}: {{ doc.title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge badge-gray fs-6">{{ doc.get_document_type_display }}</span>
+            <span class="badge {% if doc.status == 'APPROVED' %}badge-green{% elif doc.status == 'UNDER_REVIEW' %}badge-yellow{% elif doc.status == 'DRAFT' %}badge-blue{% else %}badge-gray{% endif %} fs-6">
+                {{ doc.get_status_display }}
+            </span>
+            <span class="badge bg-light text-dark border">Rev {{ doc.revision_number }}</span>
+        </div>
+        <h1 class="h3 fw-bold text-dark mb-0">{{ doc.document_number }}: {{ doc.title }}</h1>
+        <p class="text-muted small mb-0">{{ doc.department.name }} {% if doc.process %}&bull; Process: {{ doc.process.name }}{% endif %}</p>
+    </div>
+
+    <!-- Workflow Action Buttons -->
+    <div class="d-flex gap-2">
+        <a href="{% url 'documents:list' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+
+        {% if doc.status == 'DRAFT' %}
+        <a href="{% url 'documents:submit_review' doc.id %}" class="btn btn-warning btn-sm fw-semibold shadow-sm">
+            <i class="bi bi-send me-1"></i> Submit for Review
+        </a>
+        <a href="{% url 'documents:edit' doc.id %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-pencil me-1"></i> Edit
+        </a>
+        {% endif %}
+
+        {% if doc.status == 'UNDER_REVIEW' and user.can_approve_documents %}
+        <a href="{% url 'documents:approve' doc.id %}" class="btn btn-success btn-sm fw-semibold shadow-sm">
+            <i class="bi bi-check-lg me-1"></i> Approve Document
+        </a>
+        <a href="{% url 'documents:reject' doc.id %}" class="btn btn-outline-danger btn-sm">
+            <i class="bi bi-x-lg me-1"></i> Reject to Draft
+        </a>
+        {% endif %}
+
+        {% if doc.status == 'APPROVED' %}
+        <button type="button" class="btn btn-primary btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#newRevisionModal">
+            <i class="bi bi-plus-circle me-1"></i> Release New Revision
+        </button>
+        {% if user.can_approve_documents %}
+        <a href="{% url 'documents:mark_obsolete' doc.id %}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Mark this document as obsolete?');">
+            <i class="bi bi-archive me-1"></i> Mark Obsolete
+        </a>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Metadata & Workflow Card -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <span class="fw-bold text-dark"><i class="bi bi-info-circle me-2"></i> Document Information</span>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <small class="text-muted d-block">Document Number</small>
+                        <span class="fw-bold text-dark">{{ doc.document_number }}</span>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted d-block">Document Type</small>
+                        <span>{{ doc.get_document_type_display }}</span>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted d-block">Current Revision</small>
+                        <span class="fw-bold text-primary">Rev {{ doc.revision_number }}</span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <small class="text-muted d-block">Issue Date</small>
+                        <span>{{ doc.issue_date|default:"-" }}</span>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted d-block">Effective Date</small>
+                        <span class="fw-semibold text-success">{{ doc.effective_date|default:"-" }}</span>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted d-block">Next Review Date</small>
+                        <span>{{ doc.review_date|default:"-" }}</span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <small class="text-muted d-block">Document Owner</small>
+                        <span>{{ doc.owner.full_name }}</span>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted d-block">Prepared By</small>
+                        <span>{{ doc.prepared_by.full_name }}</span>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted d-block">Approved By</small>
+                        <span class="fw-semibold">{{ doc.approved_by.full_name|default:"Pending Approval" }}</span>
+                    </div>
+
+                    <div class="col-12 mt-3">
+                        <small class="text-muted d-block">Revision Rationale / Change Reason</small>
+                        <div class="p-2 bg-light rounded small border">{{ doc.revision_reason|default:"Initial baseline revision release." }}</div>
+                    </div>
+
+                    {% if doc.notes %}
+                    <div class="col-12">
+                        <small class="text-muted d-block">Internal Notes</small>
+                        <div class="small text-muted">{{ doc.notes }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Document Revision History -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <span class="fw-bold text-dark"><i class="bi bi-clock-history me-2"></i> Revision History (Archived Versions)</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Revision</th>
+                            <th>Change Rationale</th>
+                            <th>Approved By</th>
+                            <th>Archived Date</th>
+                            <th>Attachment</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for rev in revisions %}
+                        <tr>
+                            <td class="fw-bold text-secondary">Rev {{ rev.revision_number }}</td>
+                            <td class="small">{{ rev.revision_reason }}</td>
+                            <td class="small">{{ rev.approved_by.full_name|default:"Historical" }}</td>
+                            <td class="small text-muted">{{ rev.created_at|date:"Y-m-d" }}</td>
+                            <td>
+                                {% if rev.file_attachment %}
+                                <a href="{{ rev.file_attachment.url }}" class="btn btn-outline-secondary btn-sm py-0" download>
+                                    <i class="bi bi-download"></i>
+                                </a>
+                                {% else %}
+                                <span class="text-muted small">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-3">This is the original baseline revision. No superseded versions yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: File Attachment & Quick Info -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <span class="fw-bold text-dark"><i class="bi bi-paperclip me-2"></i> Document File</span>
+            </div>
+            <div class="card-body p-4 text-center">
+                {% if doc.file_attachment %}
+                <div class="display-5 text-primary mb-2"><i class="bi bi-file-earmark-pdf-fill"></i></div>
+                <h6 class="fw-bold text-dark text-truncate mb-1">{{ doc.file_attachment.name|slice:"15:" }}</h6>
+                <p class="text-muted small mb-3">Controlled Master Electronic Copy</p>
+                <a href="{{ doc.file_attachment.url }}" class="btn btn-primary btn-sm px-4 shadow-sm" download>
+                    <i class="bi bi-download me-1"></i> Download Attachment
+                </a>
+                {% else %}
+                <div class="text-muted py-3">
+                    <i class="bi bi-file-earmark-x display-6 mb-2 d-block"></i>
+                    <p class="small mb-0">No digital file uploaded for this document yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: New Revision Form -->
+<div class="modal fade" id="newRevisionModal" tabindex="-1" aria-labelledby="newRevisionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{% url 'documents:new_revision' doc.id %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="newRevisionModalLabel">Release New Revision for {{ doc.document_number }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="small text-muted">
+                        Creating a new revision will automatically archive the current version (Rev {{ doc.revision_number }}) into historical records and create the new revision in <strong>Draft</strong> status for review.
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">New Revision Code / Number *</label>
+                        {{ revision_form.new_revision_number }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Reason for Change / Revision Summary *</label>
+                        {{ revision_form.revision_reason }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Upload Updated File</label>
+                        {{ revision_form.new_file }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Revision</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

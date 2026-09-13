@@ -1,0 +1,44 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<span class="alert-badge badge-info">📊 DAILY COMPLIANCE DIGEST</span>
+<h2 style="margin: 0 0 12px 0; font-size: 18px; color: #0f172a;">
+    Plant Quality Health Status ({{ check_date }})
+</h2>
+<p style="font-size: 14px; line-height: 1.6; color: #475569; margin: 0 0 16px 0;">
+    Here is your daily automated compliance scan report across all production lines and quality gates.
+</p>
+
+<table class="data-table">
+    <tr>
+        <th>Open NCRs</th>
+        <td><strong>{{ total_open_ncrs }}</strong></td>
+    </tr>
+    <tr>
+        <th>Active Overdue Actions</th>
+        <td><strong style="color: {% if overdue_actions_count > 0 %}#dc2626{% else %}#16a34a{% endif %};">{{ overdue_actions_count }}</strong></td>
+    </tr>
+    <tr>
+        <th>Expired Calibration Instruments</th>
+        <td><strong style="color: {% if expired_calib_count > 0 %}#dc2626{% else %}#16a34a{% endif %};">{{ expired_calib_count }}</strong></td>
+    </tr>
+    <tr>
+        <th>Calibration Due (&lt; 30 Days)</th>
+        <td><strong style="color: {% if due_calib_count > 0 %}#d97706{% else %}#16a34a{% endif %};">{{ due_calib_count }}</strong></td>
+    </tr>
+    <tr>
+        <th>Expired Employee Qualifications</th>
+        <td><strong style="color: {% if expired_training_count > 0 %}#dc2626{% else %}#16a34a{% endif %};">{{ expired_training_count }}</strong></td>
+    </tr>
+    <tr>
+        <th>Upcoming Internal Audits (7 Days)</th>
+        <td><strong>{{ upcoming_audits_count }}</strong></td>
+    </tr>
+</table>
+
+<div style="text-align: center;">
+    <a href="{{ system_url }}/" class="btn-action">
+        Access Executive Dashboard &rarr;
+    </a>
+</div>
+{% endblock %}

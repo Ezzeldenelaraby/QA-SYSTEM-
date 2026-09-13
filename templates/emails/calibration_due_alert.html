@@ -1,0 +1,48 @@
+{% extends "emails/base_email.html" %}
+
+{% block content %}
+<span class="alert-badge badge-warning">⚠️ METROLOGY NOTICE</span>
+<h2 style="margin: 0 0 12px 0; font-size: 18px; color: #d97706;">
+    Calibration Window Expiring Soon
+</h2>
+<p style="font-size: 14px; line-height: 1.6; color: #475569; margin: 0 0 16px 0;">
+    The measuring instrument specified below requires formal recalibration within the next 30 days to maintain ISO 9001 Clause 7.1.5 metrological traceability compliance.
+</p>
+
+<table class="data-table">
+    <tr>
+        <th>Equipment ID</th>
+        <td><strong>{{ equipment.equipment_id }}</strong></td>
+    </tr>
+    <tr>
+        <th>Instrument Name</th>
+        <td>{{ equipment.equipment_name }}</td>
+    </tr>
+    <tr>
+        <th>Serial Number</th>
+        <td>{{ equipment.serial_number|default:"N/A" }}</td>
+    </tr>
+    <tr>
+        <th>Department / Location</th>
+        <td>{{ equipment.department.name }} ({{ equipment.location }})</td>
+    </tr>
+    <tr>
+        <th>Next Calibration Due</th>
+        <td><strong style="color: #d97706;">{{ equipment.next_calibration_date }}</strong></td>
+    </tr>
+    <tr>
+        <th>Days Remaining</th>
+        <td><strong>{{ equipment.days_until_due }} day(s)</strong></td>
+    </tr>
+    <tr>
+        <th>Calibration Provider</th>
+        <td>{{ equipment.calibration_provider }}</td>
+    </tr>
+</table>
+
+<div style="text-align: center;">
+    <a href="{{ system_url }}/calibration/{{ equipment.id }}/" class="btn-action">
+        View Instrument & Log Calibration &rarr;
+    </a>
+</div>
+{% endblock %}

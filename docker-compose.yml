@@ -1,0 +1,48 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: qms_postgres_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-qms_production}
+      POSTGRES_USER: ${POSTGRES_USER:-qms_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qms_secure_pass_2026}
+    volumes:
+      - qms_postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-qms_user} -d ${POSTGRES_DB:-qms_production}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    container_name: qms_web_app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DEBUG: "False"
+      SECRET_KEY: ${SECRET_KEY:-qms-hub-insecure-change-in-prod-super-secret-key-1234567890}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0}
+      DATABASE_URL: postgres://${POSTGRES_USER:-qms_user}:${POSTGRES_PASSWORD:-qms_secure_pass_2026}@db:5432/${POSTGRES_DB:-qms_production}
+      EMAIL_BACKEND: ${EMAIL_BACKEND:-django.core.mail.backends.console.EmailBackend}
+      EMAIL_HOST: ${EMAIL_HOST:-localhost}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_USE_TLS: ${EMAIL_USE_TLS:-True}
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-alerts@qms-hub.local}
+    ports:
+      - "8000:8000"
+    volumes:
+      - qms_media_data:/app/media
+
+volumes:
+  qms_postgres_data:
+    name: qms_postgres_data
+  qms_media_data:
+    name: qms_media_data

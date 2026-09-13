@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold text-dark mb-1">{{ title }}</h1>
+        <p class="text-muted small mb-0">ISO 9001:2015 Clause 9.2 Internal Audit Planning & Schedule.</p>
+    </div>
+    <a href="{% url 'audits:list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to Audits
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-4">
+        <form method="POST">
+            {% csrf_token %}
+            {% if form.errors %}
+            <div class="alert alert-danger small py-2">Please correct the indicated fields.</div>
+            {% endif %}
+
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label small fw-semibold">Audit Title *</label>
+                    {{ form.audit_title }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Audit Date *</label>
+                    {{ form.audit_date }}
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Department *</label>
+                    {{ form.department }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Process</label>
+                    {{ form.process }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Status</label>
+                    {{ form.status }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Lead Auditor *</label>
+                    {{ form.lead_auditor }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-semibold">Audit Team Members (Hold Ctrl/Cmd to multi-select)</label>
+                    {{ form.audit_team }}
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label small fw-semibold">Audit Scope *</label>
+                    {{ form.scope }}
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label small fw-semibold">Audit Criteria (Standards, Procedures) *</label>
+                    {{ form.criteria }}
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label small fw-semibold">Summary Notes / Outcomes</label>
+                    {{ form.summary_notes }}
+                </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                <a href="{% url 'audits:list' %}" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary px-4 shadow-sm">Save Audit Plan</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

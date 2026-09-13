@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% block title %}{{ risk.risk_id }} Detail{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge badge-primary fs-6">{{ risk.risk_id }}</span>
+            <span class="badge {% if risk.risk_level == 'CRITICAL' %}badge-red{% elif risk.risk_level == 'HIGH' %}badge-red{% elif risk.risk_level == 'MEDIUM' %}badge-yellow{% else %}badge-green{% endif %} fs-6">
+                {{ risk.get_risk_level_display }} Level (Score: {{ risk.risk_score }})
+            </span>
+            <span class="badge badge-blue fs-6">{{ risk.get_status_display }}</span>
+        </div>
+        <h1 class="h3 fw-bold text-dark mb-0">{{ risk.description|truncatewords:12 }}</h1>
+        <p class="text-muted small mb-0">{{ risk.department.name }} &bull; Process: {{ risk.process.name }}</p>
+    </div>
+
+    <div class="d-flex gap-2">
+        <a href="{% url 'risks:list' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+        <a href="{% url 'actions:create' %}?source_type=RISK&source_id={{ risk.risk_id }}&process_id={{ risk.process.id }}" class="btn btn-warning btn-sm fw-semibold shadow-sm">
+            <i class="bi bi-check2-circle me-1"></i> Spawn Mitigation Action
+        </a>
+        <a href="{% url 'risks:edit' risk.id %}" class="btn btn-primary btn-sm px-3 shadow-sm">
+            <i class="bi bi-pencil me-1"></i> Edit Risk
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <!-- FMEA Assessment Card -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <span class="fw-bold text-dark"><i class="bi bi-shield-exclamation me-2"></i> Risk Assessment & Failure Mode</span>
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-3">
+                    <small class="text-muted fw-bold d-block">Risk Event Description</small>
+                    <p class="text-dark">{{ risk.description }}</p>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded border">
+                            <small class="text-muted fw-bold d-block mb-1"><i class="bi bi-bug me-1 text-danger"></i> Root Causes / Vulnerabilities</small>
+                            <p class="small text-dark mb-0">{{ risk.cause|linebreaksbr }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded border">
+                            <small class="text-muted fw-bold d-block mb-1"><i class="bi bi-lightning-charge me-1 text-warning"></i> Potential Consequences / Impact</small>
+                            <p class="small text-dark mb-0">{{ risk.potential_consequence|linebreaksbr }}</p>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="p-3 bg-light rounded border">
+                            <small class="text-muted fw-bold d-block mb-1"><i class="bi bi-shield-check me-1 text-primary"></i> Existing Preventive & Detective Controls</small>
+                            <p class="small text-dark mb-0">{{ risk.existing_control|linebreaksbr|default:"No formal controls in place." }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mitigation Effectiveness Card -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <span class="fw-bold text-dark"><i class="bi bi-check-circle me-2"></i> Mitigation Review & Residual Risk</span>
+            </div>
+            <div class="card-body p-4">
+                <div class="mb-3">
+                    <small class="text-muted fw-bold d-block">Mitigation Effectiveness Evaluation</small>
+                    <p class="text-dark">{{ risk.effectiveness|linebreaksbr|default:"Mitigation in progress." }}</p>
+                </div>
+                <div>
+                    <small class="text-muted fw-bold d-block">Objective Evidence</small>
+                    <p class="small text-muted">{{ risk.evidence|linebreaksbr|default:"-" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Scores & Governance -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <span class="fw-bold text-dark"><i class="bi bi-calculator me-2"></i> Risk Rating</span>
+            </div>
+            <div class="card-body p-4 text-center">
+                <div class="display-3 fw-bold mb-1 {% if risk.risk_score >= 15 %}text-danger{% elif risk.risk_score >= 10 %}text-warning{% else %}text-success{% endif %}">
+                    {{ risk.risk_score }}
+                </div>
+                <div class="text-uppercase fw-bold small text-muted mb-3">Calculated Risk Score</div>
+
+                <div class="d-flex justify-content-around border-top pt-3">
+                    <div>
+                        <div class="h5 fw-bold text-dark mb-0">{{ risk.likelihood }} / 5</div>
+                        <small class="text-muted">Likelihood</small>
+                    </div>
+                    <div class="vr"></div>
+                    <div>
+                        <div class="h5 fw-bold text-dark mb-0">{{ risk.severity }} / 5</div>
+                        <small class="text-muted">Severity</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <span class="fw-bold text-dark"><i class="bi bi-person-check me-2"></i> Governance</span>
+            </div>
+            <div class="card-body p-4 small">
+                <div class="mb-2"><strong>Responsible Person:</strong> {{ risk.responsible_person.full_name }}</div>
+                <div class="mb-2"><strong>Target Due Date:</strong> {{ risk.due_date|default:"-" }}</div>
+                <div class="mb-2"><strong>Review Date:</strong> {{ risk.review_date }}</div>
+                <div class="mb-0"><strong>Action Required:</strong> {% if risk.action_required %}<span class="text-danger fw-bold">Yes</span>{% else %}No{% endif %}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

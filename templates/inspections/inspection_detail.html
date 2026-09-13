@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% block title %}{{ inspection.inspection_number }}: {{ inspection.product }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge badge-primary fs-6">{{ inspection.inspection_number }}</span>
+            <span class="badge {% if inspection.overall_result == 'OK' %}badge-green{% elif inspection.overall_result == 'NG' %}badge-red{% else %}badge-yellow{% endif %} fs-6">
+                {{ inspection.get_overall_result_display }}
+            </span>
+            <span class="badge badge-gray">{{ inspection.get_shift_display }}</span>
+        </div>
+        <h1 class="h3 fw-bold text-dark mb-0">{{ inspection.product }} &bull; Batch: {{ inspection.batch_lot }}</h1>
+        <p class="text-muted small mb-0">{{ inspection.process.name }} &bull; Machine: {{ inspection.machine }} &bull; Inspector: {{ inspection.inspector.full_name }}</p>
+    </div>
+
+    <div class="d-flex gap-2">
+        <a href="{% url 'inspections:list' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+        <button type="button" class="btn btn-primary btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#addItemModal">
+            <i class="bi bi-plus-lg me-1"></i> Add Checkpoint
+        </button>
+        <a href="{% url 'inspections:edit' inspection.id %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-pencil me-1"></i> Edit Sheet
+        </a>
+    </div>
+</div>
+
+<!-- Nonconformance Detection Banner -->
+{% if has_ng %}
+<div class="alert alert-danger shadow-sm d-flex justify-content-between align-items-center p-3 mb-4">
+    <div>
+        <h6 class="fw-bold mb-1"><i class="bi bi-exclamation-triangle-fill me-2"></i> Quality Nonconformance Detected (NG Items Present)</h6>
+        <p class="small mb-0">One or more inspection checkpoints failed drawing tolerances and specifications.</p>
+    </div>
+    {% if not inspection.linked_ncr %}
+    <form method="POST" action="{% url 'inspections:create_ncr' inspection.id %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger btn-sm px-3 fw-semibold shadow-sm">
+            <i class="bi bi-x-octagon me-1"></i> Auto-Generate NCR Report
+        </button>
+    </form>
+    {% else %}
+    <a href="{% url 'ncr:detail' inspection.linked_ncr.id %}" class="btn btn-outline-danger btn-sm fw-semibold">
+        <i class="bi bi-eye me-1"></i> View Linked {{ inspection.linked_ncr.ncr_number }}
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Checkpoint Items Table -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <span class="fw-bold text-dark"><i class="bi bi-rulers me-2 text-primary"></i> Dimensional & Visual Checkpoints</span>
+        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addItemModal">
+            <i class="bi bi-plus me-1"></i> Add Checkpoint
+        </button>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Checkpoint Name</th>
+                    <th>Specification / Tolerance</th>
+                    <th>Measured Value</th>
+                    <th>Unit</th>
+                    <th>Result</th>
+                    <th>Comment</th>
+                    <th>Photo / Evidence</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr class="{% if item.result == 'NG' %}table-danger-subtle{% endif %}">
+                    <td class="fw-bold text-dark">{{ item.checkpoint_name }}</td>
+                    <td class="small font-monospace text-muted">{{ item.specification }}</td>
+                    <td class="fw-bold fs-6 {% if item.result == 'NG' %}text-danger{% else %}text-dark{% endif %}">{{ item.measured_value }}</td>
+                    <td class="small text-muted">{{ item.unit|default:"-" }}</td>
+                    <td>
+                        {% if item.result == 'OK' %}
+                        <span class="badge badge-green"><i class="bi bi-check-circle me-1"></i> OK</span>
+                        {% elif item.result == 'NG' %}
+                        <span class="badge badge-red"><i class="bi bi-x-circle me-1"></i> NG</span>
+                        {% else %}
+                        <span class="badge badge-gray">N/A</span>
+                        {% endif %}
+                    </td>
+                    <td class="small text-muted">{{ item.comment|default:"-" }}</td>
+                    <td>
+                        {% if item.photo %}
+                        <a href="{{ item.photo.url }}" target="_blank" class="btn btn-outline-secondary btn-sm py-0">
+                            <i class="bi bi-image"></i> View
+                        </a>
+                        {% else %}
+                        <span class="text-muted small">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">No inspection checkpoints recorded yet. Click "Add Checkpoint" above.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal: Add Checkpoint Item -->
+<div class="modal fade" id="addItemModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{% url 'inspections:add_item' inspection.id %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Add Inspection Checkpoint</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Checkpoint Feature *</label>
+                        {{ item_form.checkpoint_name }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Specification / Tolerance *</label>
+                        {{ item_form.specification }}
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-8">
+                            <label class="form-label small fw-semibold">Measured Value *</label>
+                            {{ item_form.measured_value }}
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small fw-semibold">Unit</label>
+                            {{ item_form.unit }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Result *</label>
+                        {{ item_form.result }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Comment / Observation</label>
+                        {{ item_form.comment }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Upload Photo Evidence</label>
+                        {{ item_form.photo }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Checkpoint</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

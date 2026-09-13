@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}404 Not Found{% endblock %}
+{% block content %}
+<div class="text-center py-5 my-5">
+    <div class="display-1 text-secondary fw-bold"><i class="bi bi-file-earmark-x"></i> 404</div>
+    <h2 class="h4 mt-3 fw-bold text-dark">Record or Page Not Found</h2>
+    <p class="text-muted col-md-6 mx-auto mt-2">
+        The requested QMS record, document, or page does not exist or may have been archived.
+    </p>
+    <a href="{% url 'dashboard:index' %}" class="btn btn-primary mt-3 px-4 shadow-sm">
+        <i class="bi bi-arrow-left me-1"></i> Return to Dashboard
+    </a>
+</div>
+{% endblock %}

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HOLD TAG - {{ ncr.ncr_number }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .tag-container {
+            max-width: 680px;
+            margin: 30px auto;
+            background: #fff;
+            border: 5px solid #dc3545;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .tag-header {
+            background-color: #dc3545;
+            color: #fff;
+            padding: 12px;
+            text-align: center;
+            font-weight: 900;
+            font-size: 1.4rem;
+            letter-spacing: 1px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .field-label {
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #6c757d;
+            text-transform: uppercase;
+        }
+        .field-value {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #212529;
+        }
+        @media print {
+            body { background: none; margin: 0; }
+            .no-print { display: none !important; }
+            .tag-container { box-shadow: none; border: 4px solid #000; margin: 0; max-width: 100%; }
+            .tag-header { background-color: #000 !important; color: #fff !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print text-center py-3">
+        <button onclick="window.print()" class="btn btn-danger btn-lg me-2">
+            <i class="bi bi-printer-fill me-1"></i> Print Hold Tag
+        </button>
+        <a href="{% url 'ncr:detail' ncr.pk %}" class="btn btn-outline-secondary btn-lg">
+            <i class="bi bi-arrow-left me-1"></i> Back to NCR
+        </a>
+    </div>
+
+    <div class="tag-container">
+        <div class="tag-header">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> QUALITY HOLD - REJECTED MATERIAL
+            <div style="font-size: 0.85rem; font-weight: normal; opacity: 0.9;">بطاقة حجز وعزل مواد غير مطابقة للمواصفات</div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+            <div>
+                <div class="field-label">Nonconformance Report Number</div>
+                <div class="h2 fw-bold text-danger mb-0">{{ ncr.ncr_number }}</div>
+                <div class="badge bg-danger fs-6 mt-1">{{ ncr.get_severity_display }} SEVERITY</div>
+            </div>
+            <div class="text-center">
+                {% if qr_code_data %}
+                <img src="{{ qr_code_data }}" alt="NCR QR Code" style="width: 110px; height: 110px; border: 1px solid #ddd; padding: 4px;">
+                <div class="field-label mt-1" style="font-size: 0.65rem;">Scan for Digital File</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-6">
+                <div class="field-label">Part / Product Description</div>
+                <div class="field-value">{{ ncr.product }}</div>
+            </div>
+            <div class="col-6">
+                <div class="field-label">Batch / Lot Number</div>
+                <div class="field-value text-danger fw-bold">{{ ncr.batch_lot }}</div>
+            </div>
+
+            <div class="col-6">
+                <div class="field-label">Department / Originating Area</div>
+                <div class="field-value">{{ ncr.department.name }}</div>
+            </div>
+            <div class="col-6">
+                <div class="field-label">Originating Process</div>
+                <div class="field-value">{{ ncr.process.code|default:"General / Incoming" }}</div>
+            </div>
+        </div>
+
+        <div class="border rounded p-3 mb-3 bg-light">
+            <div class="field-label">Nonconformance Description & Violation</div>
+            <div class="field-value text-dark small mb-2">{{ ncr.description }}</div>
+            <div class="field-label">Standard / Drawing Violated</div>
+            <div class="field-value text-secondary small">{{ ncr.requirement }}</div>
+        </div>
+
+        <div class="border border-danger rounded p-3 mb-3" style="background-color: #fff5f5;">
+            <div class="field-label text-danger">Mandatory Containment Action</div>
+            <div class="field-value text-danger small fw-bold">{{ ncr.containment_action|default:"DO NOT MOVE - QUARANTINED UNDER QA CUSTODY" }}</div>
+        </div>
+
+        <div class="row g-3 border-top pt-3">
+            <div class="col-4">
+                <div class="field-label">Inspector Name</div>
+                <div class="field-value small">{{ ncr.reported_by.full_name }}</div>
+            </div>
+            <div class="col-4">
+                <div class="field-label">Date Quarantined</div>
+                <div class="field-value small">{{ ncr.date|date:"F d, Y" }}</div>
+            </div>
+            <div class="col-4">
+                <div class="field-label">Inspector Signature</div>
+                <div class="field-value text-muted" style="border-bottom: 1px dashed #666; height: 26px;"></div>
+            </div>
+        </div>
+
+        <div class="text-center mt-3 pt-2 text-muted" style="font-size: 0.7rem;">
+            WARNING: It is a violation of QMS procedures to remove or alter this tag without authorized Quality Manager sign-off.
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+        <thead>
+            <tr>
+                <th>Action Number</th>
+                <th>Title</th>
+                <th>Source</th>
+                <th>Process / Dept</th>
+                <th>Priority</th>
+                <th>Due Date</th>
+                <th>Status</th>
+                <th class="text-end">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for act in action_qs %}
+            <tr>
+                <td class="fw-bold"><a href="{% url 'actions:detail' act.id %}" class="text-primary text-decoration-none">{{ act.action_number }}</a></td>
+                <td class="fw-semibold text-dark">{{ act.title }}</td>
+                <td><span class="badge badge-gray">{{ act.get_source_type_display }}</span></td>
+                <td class="small">{{ act.process.code|default:act.department.code|default:"-" }}</td>
+                <td>
+                    <span class="badge {% if act.priority == 'CRITICAL' or act.priority == 'HIGH' %}badge-red{% else %}badge-yellow{% endif %}">
+                        {{ act.get_priority_display }}
+                    </span>
+                </td>
+                <td class="small {% if act.status == 'OVERDUE' %}text-danger fw-bold{% else %}text-muted{% endif %}">{{ act.due_date }}</td>
+                <td>
+                    <span class="badge {% if act.status == 'COMPLETED' %}badge-green{% elif act.status == 'OVERDUE' %}badge-red{% elif act.status == 'PENDING_VERIFICATION' %}badge-yellow{% else %}badge-blue{% endif %}">
+                        {{ act.get_status_display }}
+                    </span>
+                </td>
+                <td class="text-end">
+                    <a href="{% url 'actions:detail' act.id %}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="text-center text-muted py-4">No actions in this category.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

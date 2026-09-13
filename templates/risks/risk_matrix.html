@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block title %}Interactive 5x5 Risk Matrix{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold text-dark mb-1">Interactive 5x5 Risk Assessment Matrix</h1>
+        <p class="text-muted small mb-0">Visual distribution of process risks based on Likelihood &times; Severity severity criteria.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'risks:list' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-list-ul me-1"></i> Tabular View
+        </a>
+        <a href="{% url 'risks:create' %}" class="btn btn-primary btn-sm px-3 shadow-sm">
+            <i class="bi bi-plus-lg me-1"></i> Log Risk
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- 5x5 Grid Table -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold text-dark mb-0">Severity &times; Likelihood Matrix</h6>
+                <div class="d-flex gap-2 small">
+                    <span class="badge rm-low px-2 py-1">Low (1-4)</span>
+                    <span class="badge rm-med px-2 py-1">Medium (5-9)</span>
+                    <span class="badge rm-high px-2 py-1">High (10-14)</span>
+                    <span class="badge rm-crit px-2 py-1">Critical (15-25)</span>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="risk-matrix-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 15%;" class="text-center small text-muted">Severity \ Likelihood</th>
+                            <th class="text-center small">1 - Very Rare</th>
+                            <th class="text-center small">2 - Rare</th>
+                            <th class="text-center small">3 - Moderate</th>
+                            <th class="text-center small">4 - Likely</th>
+                            <th class="text-center small">5 - Very Frequent</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s, row in matrix.items %}
+                        <tr>
+                            <th class="small text-muted text-center">
+                                {% if s == 5 %}5 - Catastrophic
+                                {% elif s == 4 %}4 - Critical
+                                {% elif s == 3 %}3 - Moderate
+                                {% elif s == 2 %}2 - Minor
+                                {% else %}1 - Negligible
+                                {% endif %}
+                            </th>
+                            {% for l, cell in row.items %}
+                            <td class="risk-matrix-cell {{ cell.class }}" data-bs-toggle="collapse" data-bs-target="#collapse_{{ s }}_{{ l }}">
+                                <div class="fs-5 fw-bold">{{ cell.count }}</div>
+                                <div style="font-size: 0.65rem;" class="text-uppercase opacity-75">Score {{ cell.score }}</div>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Matrix X-Axis Label -->
+            <div class="text-center fw-bold small text-muted mt-2">
+                &larr; Likelihood / Probability of Occurrence &rarr;
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Cell Details Breakdown -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <span class="fw-bold text-dark"><i class="bi bi-info-circle me-2"></i> Selected Cell Risks</span>
+            </div>
+            <div class="card-body p-3" style="max-height: 520px; overflow-y: auto;">
+                <p class="small text-muted">Click on any cell in the 5x5 matrix to inspect risks in that category.</p>
+
+                {% for s, row in matrix.items %}
+                    {% for l, cell in row.items %}
+                        {% if cell.risks %}
+                        <div class="collapse mb-3" id="collapse_{{ s }}_{{ l }}">
+                            <div class="p-2 border rounded bg-light">
+                                <div class="fw-bold small text-dark mb-1">
+                                    Severity {{ s }} &times; Likelihood {{ l }} (Score: {{ cell.score }})
+                                </div>
+                                <ul class="list-unstyled mb-0">
+                                    {% for rsk in cell.risks %}
+                                    <li class="py-1 border-bottom small">
+                                        <a href="{% url 'risks:detail' rsk.id %}" class="fw-bold text-primary text-decoration-none">{{ rsk.risk_id }}</a>
+                                        <div class="text-dark">{{ rsk.description|truncatewords:10 }}</div>
+                                        <small class="text-muted">Proc: {{ rsk.process.code }} | Resp: {{ rsk.responsible_person.full_name }}</small>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

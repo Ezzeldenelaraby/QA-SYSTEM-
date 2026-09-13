@@ -1,0 +1,287 @@
+/* QMS Hub Enterprise Styling */
+:root {
+  --sidebar-width: 260px;
+  --sidebar-bg: #0f172a;
+  --sidebar-color: #94a3b8;
+  --sidebar-active-bg: #1e293b;
+  --sidebar-active-color: #38bdf8;
+  --topbar-height: 64px;
+  --primary-color: #0284c7;
+  --primary-hover: #0369a1;
+  --body-bg: #f8fafc;
+  --card-border: #e2e8f0;
+}
+
+body {
+  background-color: var(--body-bg);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: #1e293b;
+  min-height: 100vh;
+}
+
+/* Sidebar Styling */
+#sidebar-wrapper {
+  width: var(--sidebar-width);
+  min-height: 100vh;
+  background-color: var(--sidebar-bg);
+  transition: margin 0.25s ease-out;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1030;
+  overflow-y: auto;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+#sidebar-wrapper::-webkit-scrollbar {
+  width: 6px;
+}
+#sidebar-wrapper::-webkit-scrollbar-thumb {
+  background-color: #334155;
+  border-radius: 3px;
+}
+
+.sidebar-heading {
+  padding: 1.25rem 1.25rem 1rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #f8fafc;
+  border-bottom: 1px solid #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sidebar-brand-icon {
+  background: linear-gradient(135deg, #38bdf8, #0284c7);
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.sidebar-section-title {
+  padding: 1rem 1.25rem 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  padding: 0.55rem 1.25rem;
+  color: var(--sidebar-color);
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 500;
+  border-radius: 6px;
+  margin: 0.1rem 0.6rem;
+  transition: all 0.2s ease;
+}
+
+.sidebar-link i {
+  font-size: 1.1rem;
+  width: 24px;
+  margin-right: 0.6rem;
+}
+
+.sidebar-link:hover {
+  background-color: var(--sidebar-active-bg);
+  color: #f1f5f9;
+}
+
+.sidebar-link.active {
+  background-color: var(--sidebar-active-bg);
+  color: var(--sidebar-active-color);
+  font-weight: 600;
+}
+
+/* Content Area & Navbar */
+#page-content-wrapper {
+  margin-left: var(--sidebar-width);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: margin 0.25s ease-out;
+}
+
+.top-navbar {
+  height: var(--topbar-height);
+  background: #ffffff;
+  border-bottom: 1px solid var(--card-border);
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+}
+
+.search-input-group {
+  width: 320px;
+}
+
+.search-input-group .form-control {
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  font-size: 0.875rem;
+}
+.search-input-group .form-control:focus {
+  background-color: #ffffff;
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+}
+
+/* Card Styling */
+.card {
+  border: 1px solid var(--card-border);
+  border-radius: 0.6rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  margin-bottom: 1.5rem;
+  background-color: #ffffff;
+}
+
+.card-header {
+  background-color: #ffffff;
+  border-bottom: 1px solid var(--card-border);
+  padding: 1rem 1.25rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.metric-card {
+  border-left: 4px solid var(--primary-color);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+}
+
+.metric-card.border-red { border-left-color: #ef4444; }
+.metric-card.border-yellow { border-left-color: #f59e0b; }
+.metric-card.border-green { border-left-color: #10b981; }
+.metric-card.border-blue { border-left-color: #0284c7; }
+.metric-card.border-purple { border-left-color: #8b5cf6; }
+
+/* Badges - Standardized QMS Colors */
+.badge-green {
+  background-color: #dcfce7;
+  color: #15803d;
+  font-weight: 600;
+}
+.badge-yellow {
+  background-color: #fef3c7;
+  color: #b45309;
+  font-weight: 600;
+}
+.badge-red {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  font-weight: 600;
+}
+.badge-blue {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  font-weight: 600;
+}
+.badge-gray {
+  background-color: #f1f5f9;
+  color: #475569;
+  font-weight: 600;
+}
+
+/* Risk Matrix 5x5 Table */
+.risk-matrix-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 4px;
+}
+.risk-matrix-cell {
+  height: 70px;
+  width: 18%;
+  text-align: center;
+  vertical-align: middle;
+  border-radius: 6px;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  padding: 6px;
+  border: 1px solid rgba(0,0,0,0.05);
+}
+.risk-matrix-cell:hover {
+  transform: scale(1.04);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+.rm-low { background-color: #d1fae5; color: #065f46; }
+.rm-med { background-color: #fef08a; color: #854d0e; }
+.rm-high { background-color: #fed7aa; color: #9a3412; }
+.rm-crit { background-color: #fecaca; color: #991b1b; }
+
+/* Tables */
+.table th {
+  background-color: #f8fafc;
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 2px solid #e2e8f0;
+  padding: 0.85rem 1rem;
+}
+.table td {
+  padding: 0.85rem 1rem;
+  vertical-align: middle;
+  font-size: 0.88rem;
+}
+.table-hover tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+/* Fishbone Diagram Layout */
+.fishbone-container {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+.fishbone-spine {
+  height: 4px;
+  background-color: #0f172a;
+  position: relative;
+  margin: 140px 0;
+}
+.fishbone-head {
+  position: absolute;
+  right: -10px;
+  top: -24px;
+  background-color: #ef4444;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* Responsive Toggles */
+@media (max-width: 991.98px) {
+  #sidebar-wrapper {
+    margin-left: calc(-1 * var(--sidebar-width));
+  }
+  #sidebar-wrapper.toggled {
+    margin-left: 0;
+  }
+  #page-content-wrapper {
+    margin-left: 0;
+  }
+}

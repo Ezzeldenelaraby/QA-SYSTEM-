@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}403 Access Denied{% endblock %}
+{% block content %}
+<div class="text-center py-5 my-5">
+    <div class="display-1 text-danger fw-bold"><i class="bi bi-shield-x"></i> 403</div>
+    <h2 class="h4 mt-3 fw-bold text-dark">Access Denied / Insufficient Role Permissions</h2>
+    <p class="text-muted col-md-6 mx-auto mt-2">
+        You do not have the required Quality / Management role or permissions to view this resource or perform this action.
+        Please contact your QA Manager or System Administrator if you believe this is an error.
+    </p>
+    <a href="{% url 'dashboard:index' %}" class="btn btn-primary mt-3 px-4 shadow-sm">
+        <i class="bi bi-arrow-left me-1"></i> Return to Dashboard
+    </a>
+</div>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold text-dark mb-1">My User Profile</h1>
+        <p class="text-muted small mb-0">View account credentials, assigned quality role, and update contact information.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card shadow-sm text-center p-4">
+            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-3 fw-bold display-6" style="width: 80px; height: 80px;">
+                {{ user.first_name|first|default:user.username|first|upper }}
+            </div>
+            <h5 class="fw-bold text-dark mb-1">{{ user.full_name }}</h5>
+            <div class="text-muted small mb-2">{{ user.job_title|default:"Quality Professional" }}</div>
+            <div>
+                <span class="badge badge-blue">{{ user.get_role_display }}</span>
+            </div>
+            <hr>
+            <div class="text-start small text-muted">
+                <div class="mb-2"><strong>Username:</strong> {{ user.username }}</div>
+                <div class="mb-2"><strong>Department:</strong> {{ user.department.name|default:"Not specified" }}</div>
+                <div class="mb-2"><strong>Joined:</strong> {{ user.date_joined|date:"M d, Y" }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <span class="fw-bold text-dark"><i class="bi bi-pencil-square me-2"></i> Update Contact Details</span>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">First Name</label>
+                            <input type="text" name="first_name" class="form-control" value="{{ user.first_name }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Last Name</label>
+                            <input type="text" name="last_name" class="form-control" value="{{ user.last_name }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Email Address</label>
+                            <input type="email" name="email" class="form-control" value="{{ user.email }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Phone Extension / Mobile</label>
+                            <input type="text" name="phone" class="form-control" value="{{ user.phone }}">
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-top d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary px-4 shadow-sm">Update Profile</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

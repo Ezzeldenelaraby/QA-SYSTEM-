@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}REST API Integration Portal - QMS Hub{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="h3 fw-bold mb-1"><i class="bi bi-cpu text-primary me-2"></i>Industrial REST API Developer Portal</h2>
+            <p class="text-muted mb-0">Hardware-level and ERP/MES data interfaces for automated smart manufacturing.</p>
+        </div>
+        <div>
+            <span class="badge bg-success-subtle text-success border border-success px-3 py-2 fs-6">
+                <i class="bi bi-shield-check me-1"></i> REST API v1 Active
+            </span>
+        </div>
+    </div>
+
+    <!-- Token Authentication Card -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
+            <h5 class="mb-0 fw-semibold"><i class="bi bi-key-fill text-warning me-2"></i>API Authentication</h5>
+            <span class="badge bg-warning text-dark">Token Auth</span>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-3">All API requests must include the Token in the <code>Authorization</code> header:</p>
+            <div class="bg-light p-3 rounded border font-monospace mb-3">
+                Authorization: Token {% if token %}<strong class="text-primary">{{ token }}</strong>{% else %}&lt;YOUR_API_TOKEN&gt;{% endif %}
+            </div>
+            {% if token %}
+            <div class="alert alert-info py-2 d-flex align-items-center justify-content-between">
+                <div>
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    Your active session API token: <code class="fw-bold">{{ token }}</code>
+                </div>
+                <button class="btn btn-sm btn-outline-primary" onclick="navigator.clipboard.writeText('{{ token }}'); alert('Token copied!');">
+                    <i class="bi bi-clipboard me-1"></i> Copy Token
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Endpoints Directory -->
+    <div class="row g-4">
+        <!-- 1. NCR Ingestion Endpoint -->
+        <div class="col-lg-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom py-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="badge bg-success fs-7">POST</span>
+                        <code class="fs-6 fw-bold">/api/v1/ncr/</code>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h6 class="fw-bold">Automated Defect Report (Vision Systems / Tablets)</h6>
+                    <p class="text-muted small">Called by AI camera systems (Keyence, Cognex) or operator tablets upon defect detection.</p>
+                    <label class="form-label small fw-bold text-uppercase text-muted">Example JSON Payload:</label>
+                    <pre class="bg-light p-3 rounded small font-monospace" style="max-height: 200px; overflow-y: auto;">{
+  "date": "2026-09-13",
+  "department": 1,
+  "process": 1,
+  "product": "Shaft Ø45mm",
+  "batch_lot": "LOT-2026-09",
+  "source": "INSPECTION",
+  "classification": "CRITICAL",
+  "severity": "CRITICAL",
+  "due_date": "2026-09-20",
+  "description": "Surface porosity detected by optical camera.",
+  "requirement": "Zero porosity under ASTM E155",
+  "containment_action": "Reject to scrap bin."
+}</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. QC Measurements Stream -->
+        <div class="col-lg-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom py-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="badge bg-success fs-7">POST</span>
+                        <code class="fs-6 fw-bold">/api/v1/inspections/</code>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h6 class="fw-bold">CMM & Digital Gauge Data Ingestion</h6>
+                    <p class="text-muted small">Directly receives measurements from Mitutoyo USB MeasurLink or CMM probes. If any dimension is <code>NG</code>, an NCR is auto-generated!</p>
+                    <label class="form-label small fw-bold text-uppercase text-muted">Example JSON Payload:</label>
+                    <pre class="bg-light p-3 rounded small font-monospace" style="max-height: 200px; overflow-y: auto;">{
+  "date": "2026-09-13",
+  "process": 1,
+  "product": "Valve Spool",
+  "batch_lot": "LOT-99",
+  "machine": "CNC Mill #2",
+  "items": [
+    {
+      "checkpoint_name": "Outer Diameter",
+      "specification": "25.000 +/- 0.005 mm",
+      "measured_value": "25.012 mm",
+      "unit": "mm",
+      "result": "NG"
+    }
+  ]
+}</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Tool Checkout Verification -->
+        <div class="col-lg-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom py-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="badge bg-primary fs-7">GET</span>
+                        <code class="fs-6 fw-bold">/api/v1/calibration/verify/{serial}/</code>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h6 class="fw-bold">Instant Shop-Floor Gauge Verification</h6>
+                    <p class="text-muted small">Tool crib barcode scanning before releasing a gauge to production lines. Returns <code>allow_checkout: true/false</code>.</p>
+                    <label class="form-label small fw-bold text-uppercase text-muted">Example Response:</label>
+                    <pre class="bg-light p-3 rounded small font-monospace">{
+  "equipment_id": "EQ-CAL-001",
+  "equipment_name": "Digital Outside Micrometer",
+  "status": "VALID",
+  "days_until_due": 180,
+  "is_usable": true,
+  "allow_checkout": true,
+  "advisory": "APPROVED - Instrument is calibrated and valid for production."
+}</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Real-time KPIs Feed -->
+        <div class="col-lg-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom py-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <span class="badge bg-primary fs-7">GET</span>
+                        <code class="fs-6 fw-bold">/api/v1/dashboard/kpis/</code>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h6 class="fw-bold">Real-Time Andon & SCADA Metrics Feed</h6>
+                    <p class="text-muted small">Pollable feed designed for plant-floor LED TV screens, dashboard monitors, and plant supervisory software.</p>
+                    <label class="form-label small fw-bold text-uppercase text-muted">Example Response:</label>
+                    <pre class="bg-light p-3 rounded small font-monospace">{
+  "system_health": "HEALTHY",
+  "metrics": {
+    "open_ncrs": 3,
+    "critical_ncrs": 0,
+    "overdue_actions": 1,
+    "calibration_compliance_rate_pct": 94.5
+  }
+}</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
