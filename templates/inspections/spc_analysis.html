@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}SPC & Process Capability (Cpk) - QMS Hub{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2">
+    <!-- Breadcrumb & Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="h3 fw-bold mb-1"><i class="bi bi-graph-up text-primary me-2"></i>Statistical Process Control & Capability (Cp / Cpk)</h2>
+            <p class="text-muted mb-0">IATF 16949 / ISO 9001 Process Capability Assessment & Control Charting.</p>
+        </div>
+        <div>
+            <span class="badge bg-{{ verdict_color }}-subtle text-{{ verdict_color }} border border-{{ verdict_color }} px-3 py-2 fs-6">
+                <i class="bi bi-patch-check-fill me-1"></i> Cpk: {{ cpk }} ({{ verdict }})
+            </span>
+        </div>
+    </div>
+
+    <!-- Capability KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100 border-start border-4 border-{{ verdict_color }}">
+                <div class="card-body">
+                    <span class="text-muted text-uppercase fw-semibold small">Process Capability (Cpk)</span>
+                    <h3 class="display-6 fw-bold text-{{ verdict_color }} mb-1">{{ cpk }}</h3>
+                    <small class="text-muted">{{ verdict_desc }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100 border-start border-4 border-primary">
+                <div class="card-body">
+                    <span class="text-muted text-uppercase fw-semibold small">Potential Capability (Cp)</span>
+                    <h3 class="display-6 fw-bold text-primary mb-1">{{ cp }}</h3>
+                    <div class="d-flex justify-content-between text-muted small">
+                        <span>Cpu: <strong>{{ cpu }}</strong></span>
+                        <span>Cpl: <strong>{{ cpl }}</strong></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100 border-start border-4 border-info">
+                <div class="card-body">
+                    <span class="text-muted text-uppercase fw-semibold small">Distribution (Mean & Sigma)</span>
+                    <h4 class="fw-bold text-dark mt-1 mb-1">X̄ = {{ mean }}</h4>
+                    <p class="text-muted small mb-0">Std Dev (&sigma;) = <strong>{{ std_dev }}</strong> (N = {{ sample_size }})</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100 border-start border-4 border-warning">
+                <div class="card-body">
+                    <span class="text-muted text-uppercase fw-semibold small">Specification Limits</span>
+                    <div class="mt-1 small">
+                        <div>USL: <strong class="text-danger">{{ usl }}</strong></div>
+                        <div>Target: <strong class="text-success">{{ target }}</strong></div>
+                        <div>LSL: <strong class="text-danger">{{ lsl }}</strong></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-4 mb-4">
+        <!-- Run Chart / Individual X Chart -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold"><i class="bi bi-activity text-primary me-2"></i>Individual Measurements Run Chart with Control Limits</h6>
+                    <span class="badge bg-light text-dark border">Feature: {{ feature_name }}</span>
+                </div>
+                <div class="card-body">
+                    <canvas id="spcRunChart" style="max-height: 320px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Capability Histogram -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h6 class="mb-0 fw-bold"><i class="bi bi-bar-chart-fill text-primary me-2"></i>Frequency Histogram</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="spcHistogram" style="max-height: 320px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interactive Parameter Input & Raw Data -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom py-3">
+            <h5 class="mb-0 fw-semibold"><i class="bi bi-sliders text-secondary me-2"></i>Analysis Parameters & Sample Data</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{% url 'inspections:spc' %}">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Inspected Feature</label>
+                        <input type="text" name="feature" class="form-control" value="{{ feature_name }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold text-danger">Lower Spec Limit (LSL)</label>
+                        <input type="number" step="any" name="lsl" class="form-control" value="{{ lsl }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold text-success">Target Nominal</label>
+                        <input type="number" step="any" name="target" class="form-control" value="{{ target }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold text-danger">Upper Spec Limit (USL)</label>
+                        <input type="number" step="any" name="usl" class="form-control" value="{{ usl }}">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Sample Readings (Comma or whitespace separated)</label>
+                    <textarea name="samples" class="form-control font-monospace" rows="3">{{ samples_str }}</textarea>
+                    <div class="form-text">Paste inspection readings directly from CMM, digital caliper, or CSV data stream.</div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{% url 'inspections:spc' %}" class="btn btn-outline-secondary">Reset to Defaults</a>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-calculator me-1"></i> Recalculate SPC Capability
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sampleIndices = {{ sample_indices|safe }};
+    const sampleValues = {{ samples|safe }};
+    const usl = {{ usl }};
+    const lsl = {{ lsl }};
+    const target = {{ target }};
+    const mean = {{ mean }};
+    const ucl = {{ ucl }};
+    const lcl = {{ lcl }};
+
+    // 1. Run Chart
+    const ctxRun = document.getElementById('spcRunChart').getContext('2d');
+    new Chart(ctxRun, {
+        type: 'line',
+        data: {
+            labels: sampleIndices.map(i => '#' + i),
+            datasets: [
+                {
+                    label: 'Sample Reading',
+                    data: sampleValues,
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    tension: 0.1
+                },
+                {
+                    label: 'USL (' + usl + ')',
+                    data: Array(sampleIndices.length).fill(usl),
+                    borderColor: '#dc3545',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    fill: false
+                },
+                {
+                    label: 'Mean (' + mean + ')',
+                    data: Array(sampleIndices.length).fill(mean),
+                    borderColor: '#198754',
+                    borderWidth: 1.5,
+                    borderDash: [3, 3],
+                    pointRadius: 0,
+                    fill: false
+                },
+                {
+                    label: 'LSL (' + lsl + ')',
+                    data: Array(sampleIndices.length).fill(lsl),
+                    borderColor: '#dc3545',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    title: { display: true, text: 'Measured Dimension (mm)' }
+                },
+                x: {
+                    title: { display: true, text: 'Part Sample Sequence' }
+                }
+            }
+        }
+    });
+
+    // 2. Histogram Chart
+    const ctxHist = document.getElementById('spcHistogram').getContext('2d');
+    new Chart(ctxHist, {
+        type: 'bar',
+        data: {
+            labels: {{ bin_labels|safe }},
+            datasets: [{
+                label: 'Frequency Count',
+                data: {{ bin_counts|safe }},
+                backgroundColor: '#0dcaf0',
+                borderColor: '#0aa2c0',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { precision: 0 },
+                    title: { display: true, text: 'Frequency' }
+                },
+                x: {
+                    title: { display: true, text: 'Measurement Bins (mm)' }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

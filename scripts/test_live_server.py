@@ -52,11 +52,14 @@ urls_to_test = [
     ("/management-review/1/", "Management Review Detail"),
     ("/audits/", "Internal Audits Schedule"),
     ("/inspections/", "Quality Inspections"),
+    ("/inspections/spc/", "SPC & Process Capability (Cpk)"),
     ("/reports/", "Reports & Export Center"),
     ("/reports/export/?module=ncr&format=xlsx", "NCR Excel (.xlsx) Download"),
     ("/reports/export/?module=ncr&format=csv", "NCR CSV Download"),
     ("/core/settings/", "System Settings"),
     ("/core/audit-trail/", "Compliance Audit Trail"),
+    ("/api/v1/docs/", "API Developer Documentation"),
+    ("/health/", "Liveness & Health Probe"),
 ]
 
 print("\n--- 3. Testing All Core Endpoints ---")

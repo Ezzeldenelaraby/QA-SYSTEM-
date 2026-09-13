@@ -58,8 +58,11 @@
                 <a href="{% url 'capa:list' %}" class="sidebar-link {% if request.resolver_match.app_name == 'capa' %}active{% endif %}">
                     <i class="bi bi-arrow-repeat"></i> CAPA
                 </a>
-                <a href="{% url 'inspections:list' %}" class="sidebar-link {% if request.resolver_match.app_name == 'inspections' %}active{% endif %}">
+                <a href="{% url 'inspections:list' %}" class="sidebar-link {% if request.resolver_match.app_name == 'inspections' and request.resolver_match.url_name != 'spc' %}active{% endif %}">
                     <i class="bi bi-card-checklist"></i> Inspections
+                </a>
+                <a href="{% url 'inspections:spc' %}" class="sidebar-link {% if request.resolver_match.app_name == 'inspections' and request.resolver_match.url_name == 'spc' %}active{% endif %}">
+                    <i class="bi bi-graph-up"></i> SPC & Cpk Analysis
                 </a>
 
                 <!-- Compliance -->

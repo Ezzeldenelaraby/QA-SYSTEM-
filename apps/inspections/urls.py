@@ -6,6 +6,7 @@ app_name = 'inspections'
 urlpatterns = [
     path('', views.inspection_list, name='list'),
     path('create/', views.inspection_create, name='create'),
+    path('spc/', views.spc_analysis_view, name='spc'),
     path('<int:insp_id>/', views.inspection_detail, name='detail'),
     path('<int:insp_id>/edit/', views.inspection_edit, name='edit'),
     path('<int:insp_id>/add-item/', views.inspection_add_item, name='add_item'),

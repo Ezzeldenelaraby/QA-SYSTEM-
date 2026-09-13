@@ -124,3 +124,120 @@ def inspection_create_ncr(request, insp_id):
     log_audit(request.user, 'CREATE', 'NCR', ncr.id, ncr.ncr_number, notes=f'Auto-created from inspection {insp.inspection_number}')
     messages.success(request, f"Successfully raised NCR '{ncr.ncr_number}' from failed inspection checkpoints!")
     return redirect('ncr:detail', ncr_id=ncr.id)
+
+
+@login_required
+def spc_analysis_view(request):
+    """
+    Statistical Process Control (SPC) & Process Capability (Cp / Cpk) Engine.
+    IATF 16949 compliant capability assessment.
+    """
+    import math
+
+    feature_name = request.GET.get('feature', 'Cylinder Outer Diameter (Ø45mm)')
+    usl_param = request.GET.get('usl')
+    lsl_param = request.GET.get('lsl')
+    target_param = request.GET.get('target')
+    raw_samples = request.GET.get('samples', '')
+
+    default_samples = [
+        45.012, 45.008, 45.015, 44.995, 45.002,
+        45.005, 45.018, 44.998, 45.004, 45.009,
+        45.011, 45.003, 44.997, 45.006, 45.014,
+        45.000, 45.008, 45.002, 45.010, 45.007,
+        45.004, 44.999, 45.006, 45.012, 45.003
+    ]
+
+    try:
+        usl = float(usl_param) if usl_param else 45.025
+        lsl = float(lsl_param) if lsl_param else 44.975
+        target = float(target_param) if target_param else 45.000
+    except ValueError:
+        usl, lsl, target = 45.025, 44.975, 45.000
+
+    samples = []
+    if raw_samples:
+        for val in raw_samples.replace(',', ' ').replace('\n', ' ').split():
+            try:
+                samples.append(float(val))
+            except ValueError:
+                pass
+    if not samples:
+        samples = default_samples
+
+    n = len(samples)
+    mean = sum(samples) / n
+    variance = sum((x - mean) ** 2 for x in samples) / (n - 1) if n > 1 else 0
+    std_dev = math.sqrt(variance)
+
+    # Process capability calculations
+    tolerance = usl - lsl
+    cp = tolerance / (6 * std_dev) if std_dev > 0 else 0
+    cpu = (usl - mean) / (3 * std_dev) if std_dev > 0 else 0
+    cpl = (mean - lsl) / (3 * std_dev) if std_dev > 0 else 0
+    cpk = min(cpu, cpl) if std_dev > 0 else 0
+
+    # Control Limits (X-bar individual chart)
+    ucl = mean + 3 * std_dev
+    lcl = mean - 3 * std_dev
+
+    # Evaluation verdict
+    if cpk >= 1.67:
+        verdict = "EXCELLENT / WORLD CLASS"
+        verdict_color = "success"
+        verdict_desc = "Six Sigma process performance (Cpk >= 1.67). Expected defect rate < 1 PPM."
+    elif cpk >= 1.33:
+        verdict = "CAPABLE & ADEQUATE"
+        verdict_color = "success"
+        verdict_desc = "Standard automotive / aerospace benchmark capability (Cpk >= 1.33)."
+    elif cpk >= 1.00:
+        verdict = "MARGINALLY CAPABLE"
+        verdict_color = "warning"
+        verdict_desc = "Process produces items close to specification limits. Continuous monitoring required."
+    else:
+        verdict = "INCAPABLE / HIGH DEFECT RISK"
+        verdict_color = "danger"
+        verdict_desc = "Process variation exceeds tolerance limits. Scrap/rework is actively generated."
+
+    # Histogram calculation
+    min_val = min(min(samples), lsl)
+    max_val = max(max(samples), usl)
+    num_bins = 10
+    bin_width = (max_val - min_val) / num_bins if max_val > min_val else 1
+    bins = [min_val + i * bin_width for i in range(num_bins + 1)]
+    bin_labels = [f"{bins[i]:.3f}" for i in range(num_bins)]
+    bin_counts = [0] * num_bins
+    for s in samples:
+        for i in range(num_bins):
+            if i == num_bins - 1:
+                if bins[i] <= s <= bins[i+1]:
+                    bin_counts[i] += 1
+                    break
+            elif bins[i] <= s < bins[i+1]:
+                bin_counts[i] += 1
+                break
+
+    context = {
+        'feature_name': feature_name,
+        'usl': usl,
+        'lsl': lsl,
+        'target': target,
+        'samples_str': ", ".join(f"{x:.3f}" for x in samples),
+        'sample_size': n,
+        'mean': round(mean, 4),
+        'std_dev': round(std_dev, 4),
+        'cp': round(cp, 2),
+        'cpu': round(cpu, 2),
+        'cpl': round(cpl, 2),
+        'cpk': round(cpk, 2),
+        'ucl': round(ucl, 4),
+        'lcl': round(lcl, 4),
+        'verdict': verdict,
+        'verdict_color': verdict_color,
+        'verdict_desc': verdict_desc,
+        'samples': samples,
+        'sample_indices': list(range(1, n + 1)),
+        'bin_labels': bin_labels,
+        'bin_counts': bin_counts,
+    }
+    return render(request, 'inspections/spc_analysis.html', context)
