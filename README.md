@@ -226,6 +226,7 @@ railway run python manage.py createsuperuser
 | **My Actions** | `/actions/my-actions/` | Personal task workspace for logged-in user |
 | **Internal Audits** | `/audits/` | Annual audit schedule, checklists, and findings |
 | **Quality Inspections** | `/inspections/` | Receiving, in-process & final QC, auto-NCR creation |
+| **SPC & Process Capability** | `/inspections/spc/` | IATF 16949 Cp/Cpk calculation & dynamic control charts |
 | **Calibration Registry** | `/calibration/` | Measurement equipment, intervals, 30-day alerts |
 | **Training Matrix** | `/training/` | Employee competency grid & qualification tracker |
 | **Management Review** | `/management-review/` | ISO 9001 Clause 9.3 agenda, minutes & sign-off |
@@ -235,6 +236,8 @@ railway run python manage.py createsuperuser
 | **Metrology Calibration Tag** | `/calibration/<id>/sticker/` | Printable calibration sticker with QR code |
 | **System Settings** | `/core/settings/` | Plant name, thresholds, calibration interval config |
 | **Audit Trail** | `/core/audit-trail/` | Immutable log of all system changes with user stamps |
+| **API Developer Portal** | `/api/v1/docs/` | Interactive developer documentation and testing suite |
+| **Liveness & Health Probe**| `/health/` | Production container and Kubernetes liveness probe |
 | **REST API Token Auth** | `/api/v1/token/` | Obtain API authentication token for external systems |
 | **REST API - NCRs** | `/api/v1/ncr/` | Automated defect ingestion from vision cameras / MES |
 | **REST API - QC Ingestion**| `/api/v1/inspections/` | Measurement streaming from digital calipers & CMM |
